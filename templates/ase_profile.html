@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f7;
+      --bg3: #fafafa;
+      --border: rgba(0,0,0,0.09);
+      --border2: rgba(0,0,0,0.16);
+      --accent: #0071e3;
+      --accent-d: rgba(0,113,227,0.07);
+      --text: #1d1d1f;
+      --dim: #6e6e73;
+      --muted: #aeaeb2;
+      --success: #1a7f4b;
+      --success-bg: rgba(26,127,75,0.07);
+      --danger: #c0392b;
+      --danger-bg: rgba(192,57,43,0.07);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg2);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* TOP BAR */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 26px; height: 26px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #fff; }
+    .logo-name { font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em; }
+    .topbar-nav { display: flex; gap: 2px; }
+    .topbar-nav a { font-size: 0.78rem; font-weight: 500; color: var(--dim); text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+    .topbar-nav a:hover, .topbar-nav a.active { color: var(--text); background: var(--bg2); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { display: flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; color: var(--text); }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
+    .user-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .btn { font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 7px 16px; border-radius: 7px; cursor: pointer; text-decoration: none; border: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; letter-spacing: -0.01em; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #0058b8; }
+    .btn-dark { background: var(--text); color: #fff; }
+    .btn-dark:hover { background: #3a3a3f; }
+    .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--dim); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--bg2); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(192,57,43,0.15); }
+    .btn-danger:hover { background: rgba(192,57,43,0.15); }
+
+    /* PAGE */
+    .page { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    .page-header { margin-bottom: 1.8rem; }
+    .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; }
+    .page-sub { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+    /* CARD */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 14px; }
+    .card-header { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    .card-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .card-body { padding: 1.4rem; }
+
+    /* PROFILE HERO */
+    .profile-hero { display: flex; align-items: center; gap: 1.4rem; }
+    .avatar-lg { width: 64px; height: 64px; border-radius: 50%; background: var(--text); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; flex-shrink: 0; letter-spacing: -0.02em; }
+    .profile-meta { flex: 1; }
+    .profile-name { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+    .profile-email { font-size: 0.8rem; color: var(--dim); margin-top: 3px; }
+    .profile-joined { font-size: 0.72rem; color: var(--muted); margin-top: 5px; font-family: 'Fira Code', monospace; }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.72rem; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      color: var(--text);
+      background: var(--bg3);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.1);
+      background: #fff;
+    }
+    input[disabled] { opacity: 0.5; cursor: not-allowed; background: var(--bg2); }
+    .form-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      background: var(--text); color: #fff;
+      padding: 10px 18px; border-radius: 9px;
+      font-size: 0.8rem; font-weight: 500;
+      box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { background: var(--danger); }
+    #toast.success { background: var(--success); }
+
+    /* DANGER ZONE */
+    .danger-zone { border-color: rgba(192,57,43,0.2); }
+    .danger-zone .card-header { background: var(--danger-bg); }
+    .danger-zone .card-title { color: var(--danger); }
+
+    @media (max-width: 640px) {
+      .page { padding: 1.5rem 1rem; }
+      .topbar-nav { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .profile-hero { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/main-app/home/" class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="/main-app/dashboard/">Dashboard</a>
+    <a href="/main-app/strategy/">New Strategy</a>
+    <a href="/main-app/report/">Reports</a>
+    <a href="/main-app/knowledge-base/">Knowledge Base</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="/main-app/profile/" class="topbar-user" style="text-decoration:none">
+      <div class="user-avatar" id="nav-avatar">U</div>
+      <span class="user-name" id="nav-name">Profile</span>
+    </a>
+    <button class="btn btn-ghost" onclick="logoutUser()">Sign Out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">Profile</div>
+    <div class="page-sub">Manage your account information and security settings</div>
+  </div>
+
+  <!-- PROFILE HERO CARD -->
+  <div class="card">
+    <div class="card-body">
+      <div class="profile-hero">
+        <div class="avatar-lg" id="profile-avatar">--</div>
+        <div class="profile-meta">
+          <div class="profile-name" id="profile-name">Loading…</div>
+          <div class="profile-email" id="profile-email"></div>
+          <div class="profile-joined" id="profile-joined"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT PROFILE CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Edit Profile</div>
+        <div class="card-sub">Update your display name</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Full Name</label>
+          <input type="text" id="input-name" placeholder="Your full name" />
+        </div>
+        <div class="form-group full">
+          <label>Email Address</label>
+          <input type="email" id="input-email" disabled />
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-dark" onclick="saveProfile()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANGE PASSWORD CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Change Password</div>
+        <div class="card-sub">Leave blank to keep your current password</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Current Password</label>
+          <input type="password" id="input-current-pass" placeholder="Enter current password" autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="input-new-pass" placeholder="Min. 6 characters" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" id="input-confirm-pass" placeholder="Repeat new password" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-dark" onclick="savePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const csrf = () => document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => { t.className = ''; }, 3000);
+  }
+
+  async function loadProfile() {
+    try {
+      const res  = await fetch('/auth-api/user_profile/');
+      if (res.status === 401 || res.status === 403) { window.location.href = '/auth-api/user_login/'; return; }
+      const json = await res.json();
+      if (!json.success) { showToast(json.message || 'Failed to load profile', 'error'); return; }
+      const u = json.data;
+
+      document.getElementById('profile-avatar').textContent = u.initials || '--';
+      document.getElementById('nav-avatar').textContent     = u.initials || 'U';
+      document.getElementById('profile-name').textContent   = u.full_name;
+      document.getElementById('nav-name').textContent       = u.full_name;
+      document.getElementById('profile-email').textContent  = u.email;
+      document.getElementById('profile-joined').textContent = `Member since ${u.date_joined}`;
+
+      document.getElementById('input-name').value  = u.full_name !== u.email ? u.full_name : '';
+      document.getElementById('input-email').value = u.email;
+    } catch (e) {
+      showToast('Failed to load profile', 'error');
+    }
+  }
+
+  async function saveProfile() {
+    const full_name = document.getElementById('input-name').value.trim();
+    if (!full_name) { showToast('Name cannot be empty', 'error'); return; }
+    try {
+      const res  = await fetch('/auth-api/user_profile/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+        body: JSON.stringify({ full_name }),
+      });
+      const json = await res.json();
+      if (!json.success) { showToast(json.message || 'Update failed', 'error'); return; }
+      showToast('Profile updated successfully');
+      loadProfile();
+    } catch (e) {
+      showToast('Something went wrong', 'error');
+    }
+  }
+
+  async function savePassword() {
+    const current_password = document.getElementById('input-current-pass').value;
+    const new_password     = document.getElementById('input-new-pass').value;
+    const confirm_password = document.getElementById('input-confirm-pass').value;
+
+    if (!current_password || !new_password || !confirm_password) {
+      showToast('All password fields are required', 'error'); return;
+    }
+    if (new_password !== confirm_password) {
+      showToast('New passwords do not match', 'error'); return;
+    }
+    if (new_password.length < 6) {
+      showToast('Password must be at least 6 characters', 'error'); return;
+    }
+    try {
+      const res  = await fetch('/auth-api/user_profile/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+        body: JSON.stringify({ current_password, new_password }),
+      });
+      const json = await res.json();
+      if (!json.success) { showToast(json.message || 'Update failed', 'error'); return; }
+      showToast('Password updated successfully');
+      document.getElementById('input-current-pass').value = '';
+      document.getElementById('input-new-pass').value     = '';
+      document.getElementById('input-confirm-pass').value = '';
+    } catch (e) {
+      showToast('Something went wrong', 'error');
+    }
+  }
+
+  async function logoutUser() {
+    try {
+      await fetch('/auth-api/user_logout/', { method: 'POST', headers: { 'X-CSRFToken': csrf() } });
+    } catch (_) {}
+    window.location.href = '/auth-api/user_login/';
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

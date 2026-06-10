@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#ffffff; --bg2:#f5f5f7; --bg3:#fafafa;
+      --border:rgba(0,0,0,0.09); --border2:rgba(0,0,0,0.16);
+      --accent:#6366f1; --accent-d:rgba(99,102,241,0.08);
+      --text:#1d1d1f; --dim:#6e6e73; --muted:#aeaeb2;
+      --success:#16a34a; --success-bg:rgba(22,163,74,0.08);
+      --warning:#b45309; --warning-bg:rgba(180,83,9,0.08);
+      --danger:#dc2626; --danger-bg:rgba(220,38,38,0.08);
+      --shadow-sm:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+      --shadow:0 4px 12px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.04);
+    }
+    body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg2); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
+    ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:var(--bg2)} ::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px}
+
+    /* TOP BAR */
+    .topbar{background:#fff;border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:50}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+    .logo-mark{width:26px;height:26px;background:var(--text);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:#fff}
+    .logo-name{font-size:0.85rem;font-weight:700;letter-spacing:-0.02em}
+    .topbar-nav{display:flex;gap:2px}
+    .topbar-nav a{font-size:0.78rem;font-weight:500;color:var(--dim);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all 0.15s}
+    .topbar-nav a:hover,.topbar-nav a.active{color:var(--text);background:var(--bg2)}
+    .topbar-right{display:flex;gap:8px}
+    .btn{font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;padding:7px 16px;border-radius:7px;cursor:pointer;text-decoration:none;border:none;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s}
+    .btn-ghost{background:none;border:1px solid var(--border2);color:var(--dim)}
+    .btn-ghost:hover{color:var(--text);background:var(--bg2)}
+    .btn-accent{background:var(--accent);color:#fff}
+    .btn-accent:hover{opacity:0.88}
+
+    /* ═══ LIST VIEW ═══ */
+    #view-list{display:none}
+    .list-page{max-width:860px;margin:0 auto;padding:2.5rem 2rem}
+    .list-page-header{margin-bottom:2rem}
+    .list-page-title{font-size:1.6rem;font-weight:800;letter-spacing:-0.04em;margin-bottom:0.4rem}
+    .list-page-sub{font-size:0.85rem;color:var(--dim)}
+    .report-list-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
+    .report-list-empty{padding:3rem;text-align:center}
+    .report-row{display:flex;align-items:center;gap:14px;padding:1rem 1.4rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+    .report-row:last-child{border-bottom:none}
+    .report-row:hover{background:var(--bg3)}
+    .report-row-ico{width:36px;height:36px;border-radius:9px;background:var(--accent-d);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+    .report-row-body{flex:1;min-width:0}
+    .report-row-title{font-size:0.85rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+    .report-row-meta{font-family:'Fira Code',monospace;font-size:0.68rem;color:var(--muted)}
+    .report-row-right{text-align:right;flex-shrink:0}
+    .report-row-time{font-size:0.72rem;color:var(--muted);margin-top:4px}
+    .pill{display:inline-flex;align-items:center;gap:5px;font-size:0.66rem;font-weight:700;padding:3px 9px;border-radius:100px;text-transform:uppercase;letter-spacing:0.04em}
+    .pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+    .pill-success{background:var(--success-bg);color:var(--success)}
+    .pill-running{background:rgba(99,102,241,0.1);color:var(--accent)}
+    .pill-failed{background:var(--danger-bg);color:var(--danger)}
+    .pill-queued{background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
+
+    /* ═══ DETAIL VIEW ═══ */
+    #view-detail{display:none}
+    .detail-meta{background:#fff;border-bottom:1px solid var(--border);padding:0.85rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    .detail-meta-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .detail-title{font-size:0.9rem;font-weight:700;color:var(--text);max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .eye-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;gap:4px;transition:all 0.15s;flex-shrink:0}
+    .eye-btn:hover{background:var(--bg2);color:var(--text);border-color:var(--accent)}
+    .fq-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center}
+    .fq-box{background:#fff;border-radius:14px;padding:2rem;max-width:640px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);position:relative}
+    .fq-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.6rem}
+    .fq-text{font-size:1rem;font-weight:600;color:var(--text);line-height:1.6;word-break:break-word}
+    .fq-close{position:absolute;top:1rem;right:1rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.75rem;color:var(--dim)}
+    .fq-close:hover{background:var(--bg3)}
+    .detail-thread{font-family:'Fira Code',monospace;font-size:0.7rem;color:var(--muted);background:var(--bg2);padding:3px 9px;border-radius:5px;border:1px solid var(--border)}
+    .detail-date{font-size:0.72rem;color:var(--muted)}
+    .detail-actions{display:flex;gap:8px}
+
+    /* REPORT LAYOUT */
+    .report-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 104px)}
+    .tab-sidebar{background:#fff;border-right:1px solid var(--border);padding:1.2rem 0.8rem;display:flex;flex-direction:column;gap:2px;position:sticky;top:104px;height:calc(100vh - 104px);overflow-y:auto}
+    .tab-section-label{font-size:0.63rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;padding:8px 10px 4px}
+    .tab-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;border:none;background:none;cursor:pointer;text-align:left;width:100%;transition:all 0.15s}
+    .tab-btn:hover{background:var(--bg2)}
+    .tab-btn.active{background:var(--accent-d)}
+    .tab-btn.active .tab-name{color:var(--accent)}
+    .tab-btn.active .tab-ico{background:var(--accent)}
+    .tab-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;background:var(--bg2)}
+    .tab-name{font-size:0.78rem;font-weight:600;color:var(--dim)}
+    .tab-status{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0}
+    .tab-status.pending{background:var(--muted)}
+
+    /* CONTENT */
+    .report-content{padding:2rem}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .content-header{margin-bottom:1.8rem}
+    .content-eyebrow{font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem}
+    .content-h1{font-size:1.6rem;font-weight:800;letter-spacing:-0.04em;color:var(--text);line-height:1.2;margin-bottom:0.5rem}
+    .content-lead{font-size:0.88rem;color:var(--dim);line-height:1.8;max-width:680px}
+
+    /* CARDS */
+    .info-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.4rem;box-shadow:var(--shadow-sm);margin-bottom:14px}
+    .info-card-title{font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.8rem}
+    .info-card-body{font-size:0.85rem;color:var(--dim);line-height:1.8}
+    .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+    .stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.2rem;box-shadow:var(--shadow-sm)}
+    .stat-label{font-size:0.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem}
+    .stat-val{font-size:1.5rem;font-weight:800;letter-spacing:-0.04em;color:var(--text);line-height:1;margin-bottom:0.3rem}
+    .stat-sub{font-size:0.7rem;color:var(--muted)}
+
+    /* TAGS */
+    .tag{display:inline-flex;align-items:center;font-size:0.7rem;font-weight:600;padding:4px 10px;border-radius:100px}
+    .tag-blue{background:var(--accent-d);color:var(--accent);border:1px solid rgba(99,102,241,0.2)}
+    .tag-green{background:var(--success-bg);color:var(--success);border:1px solid rgba(22,163,74,0.2)}
+    .tag-red{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(220,38,38,0.2)}
+    .tag-warn{background:var(--warning-bg);color:var(--warning);border:1px solid rgba(180,83,9,0.2)}
+    .tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:0.8rem}
+
+    /* BULLET LIST */
+    .bullet-list{display:flex;flex-direction:column;gap:8px}
+    .bullet-item{display:flex;gap:10px;font-size:0.85rem;color:var(--dim);line-height:1.65}
+    .bullet-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:8px}
+    .bullet-dot.danger{background:var(--danger)}
+    .bullet-dot.success{background:var(--success)}
+
+    /* FIELD RENDERER */
+    .field-section{margin-bottom:12px}
+    .field-key{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:5px}
+    .field-val{font-size:0.85rem;color:var(--dim);line-height:1.75}
+
+    /* FINAL STRATEGY SPECIAL CARD */
+    .fs-section{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:14px}
+    .fs-section-header{padding:1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg3)}
+    .fs-section-icon{font-size:1rem}
+    .fs-section-title{font-size:0.83rem;font-weight:700;color:var(--text)}
+    .fs-section-body{padding:1.2rem 1.4rem}
+
+    /* CITATIONS */
+    .cit-section{border-top:1px solid var(--border);margin-top:16px;padding-top:12px}
+    .cit-toggle{display:flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:600;color:var(--dim);cursor:pointer;user-select:none;background:none;border:none;padding:0;font-family:'Inter',sans-serif}
+    .cit-toggle:hover{color:var(--text)}
+    .cit-count{font-size:0.63rem;font-weight:700;padding:2px 7px;border-radius:100px;background:var(--bg2);border:1px solid var(--border);color:var(--muted)}
+    .cit-arrow{font-size:0.6rem;transition:transform 0.15s;color:var(--muted)}
+    .cit-body{flex-direction:column;gap:6px;margin-top:10px}
+    .cit-item{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:7px;background:var(--bg3);border:1px solid var(--border)}
+    .cit-ico{font-size:0.85rem;flex-shrink:0;margin-top:1px}
+    .cit-name{font-size:0.75rem;font-weight:600;color:var(--text)}
+    .cit-meta{font-family:'Fira Code',monospace;font-size:0.65rem;color:var(--muted);margin-top:1px}
+    .cit-snippet{font-size:0.72rem;color:var(--dim);margin-top:4px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+    /* SKELETON */
+    .skeleton{background:linear-gradient(90deg,var(--bg2) 25%,#e8e8ed 50%,var(--bg2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .sk-card{height:110px;margin-bottom:14px}
+    .sk-line{height:14px;margin-bottom:10px}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center;padding:4rem 2rem}
+    .empty-ico{font-size:2.5rem;opacity:0.3;margin-bottom:12px}
+    .empty-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px}
+    .empty-sub{font-size:0.83rem;color:var(--muted);margin-bottom:20px;line-height:1.6}
+
+    @media(max-width:1024px){.report-layout{grid-template-columns:1fr}.tab-sidebar{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:0.8rem;border-right:none;border-bottom:1px solid var(--border)}.tab-section-label{display:none}.tab-btn{width:auto}.info-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.topbar-nav{display:none}.info-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="/main-app/home/" class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="/main-app/dashboard/">Dashboard</a>
+    <a href="/main-app/strategy/">New Strategy</a>
+    <a href="/main-app/report/" class="active">Reports</a>
+    <a href="/main-app/knowledge-base/">Knowledge Base</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="/main-app/profile/" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);margin-right:4px">
+      <div id="nav-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">U</div>
+      <span id="nav-name" style="font-size:0.78rem;font-weight:600"></span>
+    </a>
+    <a href="/main-app/strategy/" class="btn btn-accent">+ New Analysis</a>
+  </div>
+</div>
+
+<!-- ═══════════════ LIST VIEW ═══════════════ -->
+<div id="view-list">
+  <div class="list-page">
+    <div class="list-page-header">
+      <div class="list-page-title">Strategy Reports</div>
+      <div class="list-page-sub">All your AI strategy analyses — click any report to view the full breakdown.</div>
+    </div>
+    <div class="report-list-card" id="report-list-card">
+      <div class="skeleton sk-card" style="margin:1.4rem;border-radius:10px"></div>
+      <div class="skeleton sk-card" style="margin:1.4rem;border-radius:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DETAIL VIEW ═══════════════ -->
+<div id="view-detail">
+
+  <!-- META BAR -->
+  <div class="detail-meta">
+    <div class="detail-meta-left">
+      <button class="btn btn-ghost" onclick="showListView()" style="gap:6px">← All Reports</button>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div class="detail-title" id="detail-title">—</div>
+      <button class="eye-btn" id="full-query-btn" onclick="showFullQuery()" title="View full query" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        View
+      </button>
+      <span class="detail-thread" id="detail-thread">—</span>
+      <span class="detail-date" id="detail-date"></span>
+      <span class="pill pill-success" id="detail-pill" style="display:none"><span class="pill-dot"></span><span id="detail-pill-text"></span></span>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="report-layout">
+
+    <!-- SIDEBAR TABS -->
+    <div class="tab-sidebar">
+      <div class="tab-section-label">Analysis Modules</div>
+      <button class="tab-btn active" onclick="showTab('exec',this)">
+        <div class="tab-ico">📊</div><div class="tab-name">Executive Summary</div><div class="tab-status" id="ts-exec"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('market',this)">
+        <div class="tab-ico">📈</div><div class="tab-name">Market Analysis</div><div class="tab-status" id="ts-market"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('competitive',this)">
+        <div class="tab-ico">⚔️</div><div class="tab-name">Competitive Landscape</div><div class="tab-status" id="ts-competitive"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('monetization',this)">
+        <div class="tab-ico">💰</div><div class="tab-name">Monetization</div><div class="tab-status" id="ts-monetization"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('risk',this)">
+        <div class="tab-ico">🛡️</div><div class="tab-name">Risk Assessment</div><div class="tab-status" id="ts-risk"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('roadmap',this)">
+        <div class="tab-ico">🗺️</div><div class="tab-name">Roadmap</div><div class="tab-status" id="ts-roadmap"></div>
+      </button>
+      <button class="tab-btn" onclick="showTab('weakness',this)">
+        <div class="tab-ico">🔍</div><div class="tab-name">Weakness Review</div><div class="tab-status" id="ts-weakness"></div>
+      </button>
+      <div class="tab-section-label" style="margin-top:0.5rem">Synthesis</div>
+      <button class="tab-btn" onclick="showTab('final',this)">
+        <div class="tab-ico">✨</div><div class="tab-name">Final Strategy</div><div class="tab-status" id="ts-final"></div>
+      </button>
+    </div>
+
+    <!-- TAB CONTENT -->
+    <div class="report-content">
+
+      <div class="tab-pane active" id="tab-exec">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 01 · Executive Summary</div>
+          <div class="content-h1" id="exec-h1">Executive Summary</div>
+        </div>
+        <div id="exec-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-market">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 02 · Market Analysis</div>
+          <div class="content-h1">Market Sizing &amp; Opportunity</div>
+        </div>
+        <div id="market-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-competitive">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 03 · Competitive Landscape</div>
+          <div class="content-h1">Competitive Positioning</div>
+        </div>
+        <div id="competitive-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-monetization">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 04 · Monetization Strategy</div>
+          <div class="content-h1">Revenue Models &amp; Pricing</div>
+        </div>
+        <div id="monetization-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-risk">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 05 · Risk Assessment</div>
+          <div class="content-h1">Risk Analysis &amp; Mitigation</div>
+        </div>
+        <div id="risk-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-roadmap">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 06 · Roadmap</div>
+          <div class="content-h1">Execution Plan</div>
+        </div>
+        <div id="roadmap-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-weakness">
+        <div class="content-header">
+          <div class="content-eyebrow">Module 07 · Weakness Review</div>
+          <div class="content-h1">Gap Analysis &amp; Blind Spots</div>
+        </div>
+        <div id="weakness-body"><div class="skeleton sk-card"></div></div>
+      </div>
+
+      <div class="tab-pane" id="tab-final">
+        <div class="content-header">
+          <div class="content-eyebrow">Synthesis · Final Strategy</div>
+          <div class="content-h1">Aggregated Strategy Brief</div>
+          <p class="content-lead" id="final-lead">Synthesized from all 7 analysis chains by the aggregation layer.</p>
+        </div>
+        <div id="final-body"><div class="skeleton sk-card"></div><div class="skeleton sk-card"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('access_token') || localStorage.getItem('access') || '';
+  const csrf  = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+
+  // Load user into topbar
+  (async () => {
+    try {
+      const res  = await fetch('/auth-api/user_profile/', { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('nav-avatar').textContent = json.data.initials || 'U';
+        document.getElementById('nav-name').textContent   = json.data.full_name || '';
+      }
+    } catch (_) {}
+  })();
+
+  /* ─── helpers ─── */
+  function esc(s) {
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ─── Citations ─── */
+  function toggleCit(bodyId) {
+    const body = document.getElementById(bodyId);
+    const arr  = document.getElementById('ca-' + bodyId);
+    if (!body) return;
+    const open = body.style.display === 'flex';
+    body.style.display = open ? 'none' : 'flex';
+    if (arr) arr.style.transform = open ? '' : 'rotate(90deg)';
+  }
+
+  function renderCitations(citations, uid) {
+    if (!citations) return '';
+    const kb  = Array.isArray(citations.kb_sources)  ? citations.kb_sources  : [];
+    const web = Array.isArray(citations.web_sources) ? citations.web_sources : [];
+    const total = kb.length + web.length;
+    if (!total) return '';
+    const bodyId = 'cit-' + uid;
+    let rows = '';
+    kb.forEach(c => {
+      rows += `<div class="cit-item">
+        <span class="cit-ico">📄</span>
+        <div style="flex:1;min-width:0">
+          <div class="cit-name">${esc(c.doc_name || 'Document')}</div>
+          <div class="cit-meta">Page ${c.page || '—'}</div>
+          ${c.snippet ? `<div class="cit-snippet">${esc(c.snippet)}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    web.forEach(c => {
+      const host = (c.url || '').replace(/^https?:\/\//,'').split('/')[0];
+      rows += `<div class="cit-item">
+        <span class="cit-ico">🌐</span>
+        <div style="flex:1;min-width:0">
+          <div class="cit-name"><a href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${esc(c.title || host)}</a></div>
+          <div class="cit-meta">${esc(host)}</div>
+          ${c.snippet ? `<div class="cit-snippet">${esc(c.snippet)}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    return `<div class="cit-section">
+      <button class="cit-toggle" onclick="toggleCit('${bodyId}')">
+        <span>Sources</span>
+        <span class="cit-count">${total}</span>
+        <span class="cit-arrow" id="ca-${bodyId}">▶</span>
+      </button>
+      <div id="${bodyId}" class="cit-body" style="display:none">${rows}</div>
+    </div>`;
+  }
+  function noData(msg) {
+    return `<div class="empty-state"><div class="empty-ico">📭</div><div class="empty-title">No data</div><div class="empty-sub">${esc(msg)}</div></div>`;
+  }
+  function fmtUSD(n) {
+    if (n == null || isNaN(n)) return '—';
+    if (n >= 1e12) return '$' + (n/1e12).toFixed(1) + 'T';
+    if (n >= 1e9)  return '$' + (n/1e9).toFixed(1) + 'B';
+    if (n >= 1e6)  return '$' + (n/1e6).toFixed(1) + 'M';
+    if (n >= 1e3)  return '$' + (n/1e3).toFixed(0) + 'K';
+    return '$' + n;
+  }
+  function parseAgent(raw) {
+    if (!raw) return null;
+    if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return null; } }
+    return raw;
+  }
+  const SEV = {Critical:'tag-red', High:'tag-warn', Medium:'tag-blue', Low:'tag-green'};
+
+  /* ─── Executive Summary ─── */
+  function renderExecSummary(d) {
+    if (!d || typeof d !== 'object') return noData('Executive Summary data unavailable.');
+    const conf = d.confidence_score != null ? d.confidence_score : null;
+    const confColor = conf == null ? 'var(--muted)' : conf >= 80 ? 'var(--success)' : conf >= 60 ? 'var(--warning)' : 'var(--danger)';
+    return `
+      <div class="info-grid">
+        <div class="stat-card">
+          <div class="stat-label">Confidence Score</div>
+          <div class="stat-val" style="color:${confColor}">${conf != null ? conf + '%' : '—'}</div>
+          <div class="stat-sub">AI assessment confidence</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Time to Market</div>
+          <div class="stat-val" style="font-size:0.82rem;padding-top:6px;line-height:1.5">${esc(d.time_to_market || '—')}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Market Opportunity</div>
+          <div class="stat-val" style="font-size:0.78rem;padding-top:6px;line-height:1.5;color:var(--success)">${esc(d.key_market_opportunity || '—')}</div>
+        </div>
+      </div>
+      ${d.problem_statement ? `<div class="info-card"><div class="info-card-title">Problem Statement</div><div class="info-card-body">${esc(d.problem_statement)}</div></div>` : ''}
+      ${d.strategic_opportunity ? `<div class="info-card"><div class="info-card-title">Strategic Opportunity</div><div class="info-card-body">${esc(d.strategic_opportunity)}</div></div>` : ''}
+      ${d.proposed_solution ? `<div class="info-card"><div class="info-card-title">Proposed Solution</div><div class="info-card-body">${esc(d.proposed_solution)}</div></div>` : ''}
+      ${d.business_impact ? `<div class="info-card" style="border-color:rgba(22,163,74,0.25)"><div class="info-card-title">Business Impact</div><div class="info-card-body" style="color:var(--success)">${esc(d.business_impact)}</div></div>` : ''}
+      ${Array.isArray(d.key_highlights) && d.key_highlights.length ? `
+      <div class="info-card">
+        <div class="info-card-title">Key Highlights</div>
+        <div class="info-card-body"><div class="bullet-list">${d.key_highlights.map(h => `<div class="bullet-item"><div class="bullet-dot success"></div><div>${esc(String(h))}</div></div>`).join('')}</div></div>
+      </div>` : ''}
+      ${renderCitations(d.citations, 'exec')}`;
+  }
+
+  /* ─── Market Analysis ─── */
+  function renderMarketAnalysis(d) {
+    if (!d || typeof d !== 'object') return noData('Market Analysis data unavailable.');
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card">
+          <div class="stat-label">Market Size</div>
+          <div class="stat-val" style="font-size:0.8rem;padding-top:4px;line-height:1.55;color:var(--text)">${esc(d.market_size || '—')}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Growth Rate</div>
+          <div class="stat-val" style="font-size:0.8rem;padding-top:4px;line-height:1.55;color:var(--success)">${esc(d.market_growth_rate || '—')}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">5-Year Projection</div>
+          <div class="stat-val" style="font-size:0.8rem;padding-top:4px;line-height:1.55;color:var(--accent)">${esc(d.projected_size_5yr || '—')}</div>
+        </div>
+      </div>`;
+
+    if (d.market_opportunity) {
+      html += `<div class="info-card" style="border-color:rgba(99,102,241,0.2);background:var(--accent-d)">
+        <div class="info-card-title" style="color:var(--accent)">Market Opportunity</div>
+        <div class="info-card-body">${esc(d.market_opportunity)}</div>
+      </div>`;
+    }
+
+    if (d.market_overview) {
+      html += `<div class="info-card">
+        <div class="info-card-title">Market Overview</div>
+        <div class="info-card-body">${esc(d.market_overview)}</div>
+      </div>`;
+    }
+
+    if (Array.isArray(d.key_trends) && d.key_trends.length) {
+      html += `<div class="info-card">
+        <div class="info-card-title">Key Market Trends</div>
+        <div class="info-card-body"><div class="bullet-list">${d.key_trends.map((t,i)=>`
+          <div class="bullet-item">
+            <div style="width:20px;height:20px;border-radius:6px;background:var(--accent-d);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;flex-shrink:0">${i+1}</div>
+            <div>${esc(t)}</div>
+          </div>`).join('')}</div></div>
+      </div>`;
+    }
+
+    if (Array.isArray(d.growth_drivers) && d.growth_drivers.length) {
+      html += `<div class="info-card">
+        <div class="info-card-title">Growth Drivers</div>
+        <div class="info-card-body"><div class="bullet-list">${d.growth_drivers.map(g=>`<div class="bullet-item"><div class="bullet-dot success"></div><div>${esc(g)}</div></div>`).join('')}</div></div>
+      </div>`;
+    }
+
+    if (Array.isArray(d.key_challenges) && d.key_challenges.length) {
+      html += `<div class="info-card">
+        <div class="info-card-title">Key Challenges</div>
+        <div class="info-card-body"><div class="bullet-list">${d.key_challenges.map(c=>`<div class="bullet-item"><div class="bullet-dot danger"></div><div>${esc(c)}</div></div>`).join('')}</div></div>
+      </div>`;
+    }
+
+    html += renderCitations(d.citations, 'market');
+    return html;
+  }
+
+  /* ─── Competitive Landscape ─── */
+  function renderCompetitive(d) {
+    if (!d || typeof d !== 'object') return noData('Competitive Landscape data unavailable.');
+    let html = '';
+    if (Array.isArray(d.key_competitors) && d.key_competitors.length) {
+      html += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px">
+        ${d.key_competitors.map(c => `
+          <div class="info-card" style="margin-bottom:0">
+            <div class="info-card-title" style="font-size:0.88rem">${esc(c.name||'Competitor')}</div>
+            <div style="font-size:0.72rem;color:var(--dim);margin-bottom:10px">${esc(c.market_position||'')}</div>
+            ${Array.isArray(c.strengths)&&c.strengths.length ? `<div class="field-key">Strengths</div><div class="bullet-list" style="margin-bottom:8px">${c.strengths.map(s=>`<div class="bullet-item" style="font-size:0.78rem"><div class="bullet-dot success"></div><div>${esc(s)}</div></div>`).join('')}</div>` : ''}
+            ${Array.isArray(c.weaknesses)&&c.weaknesses.length ? `<div class="field-key">Weaknesses</div><div class="bullet-list">${c.weaknesses.map(w=>`<div class="bullet-item" style="font-size:0.78rem"><div class="bullet-dot danger"></div><div>${esc(w)}</div></div>`).join('')}</div>` : ''}
+          </div>`).join('')}
+      </div>`;
+    }
+    if (d.porters_forces && typeof d.porters_forces === 'object') {
+      const pf = d.porters_forces;
+      const forces = [{l:'Supplier Power',k:'supplier_power'},{l:'Buyer Power',k:'buyer_power'},{l:'Competitive Rivalry',k:'competitive_rivalry'},{l:'Threat of Substitutes',k:'threat_of_substitutes'},{l:'Threat of New Entrants',k:'threat_of_new_entrants'}];
+      const attClass = pf.industry_attractiveness==='High' ? 'tag-green' : pf.industry_attractiveness==='Low' ? 'tag-red' : 'tag-warn';
+      html += `<div class="info-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div class="info-card-title" style="margin-bottom:0">Porter's Five Forces</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="tag ${attClass}">${esc(pf.industry_attractiveness||'—')}</span>
+            <span style="font-size:0.72rem;color:var(--muted)">Score: ${pf.overall_score!=null?Number(pf.overall_score).toFixed(1):'—'}/5</span>
+          </div>
+        </div>
+        ${forces.map(f => {
+          const score = pf[f.k]||0; const pct=(score/5)*100;
+          const bc = score>=4?'var(--danger)':score>=3?'var(--warning)':'var(--success)';
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:0.75rem;font-weight:600;color:var(--dim)">${f.l}</span>
+              <span style="font-size:0.72rem;font-weight:700;color:var(--text)">${score}/5</span>
+            </div>
+            <div style="background:var(--bg2);border-radius:99px;height:5px;overflow:hidden"><div style="height:5px;border-radius:99px;background:${bc};width:${pct}%"></div></div>
+          </div>`;
+        }).join('')}
+        ${pf.dominant_force ? `<div style="margin-top:10px;font-size:0.75rem;color:var(--dim)">Dominant force: <strong style="color:var(--text)">${esc(pf.dominant_force)}</strong></div>` : ''}
+      </div>`;
+    }
+    if (Array.isArray(d.our_advantages)&&d.our_advantages.length) {
+      html += `<div class="info-card"><div class="info-card-title">Our Advantages</div><div class="info-card-body"><div class="bullet-list">${d.our_advantages.map(a=>`<div class="bullet-item"><div class="bullet-dot success"></div><div>${esc(a)}</div></div>`).join('')}</div></div></div>`;
+    }
+    if (Array.isArray(d.positioning_gaps)&&d.positioning_gaps.length) {
+      html += `<div class="info-card"><div class="info-card-title">Positioning Gaps</div><div class="info-card-body"><div class="bullet-list">${d.positioning_gaps.map(g=>`<div class="bullet-item"><div class="bullet-dot" style="background:var(--warning)"></div><div>${esc(g)}</div></div>`).join('')}</div></div></div>`;
+    }
+    if (d.recommended_position || d.differentiation_strategy) {
+      html += `<div class="info-card"><div class="info-card-title">Recommended Positioning</div><div class="info-card-body">
+        ${d.recommended_position ? `<div class="field-section"><div class="field-key">Position</div><div class="field-val">${esc(d.recommended_position)}</div></div>` : ''}
+        ${d.differentiation_strategy ? `<div class="field-section"><div class="field-key">Differentiation</div><div class="field-val">${esc(d.differentiation_strategy)}</div></div>` : ''}
+      </div></div>`;
+    }
+    html += renderCitations(d.citations, 'competitive');
+    return html;
+  }
+
+  /* ─── Monetization ─── */
+  function renderMonetization(d) {
+    if (!d || typeof d !== 'object') return noData('Monetization data unavailable.');
+    const ue = d.unit_economics || {};
+    const rp = d.revenue_projection || {};
+    const gc = {A:'var(--success)',B:'#16a34a',C:'var(--warning)',D:'var(--danger)'}[ue.health_grade]||'var(--muted)';
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card"><div class="stat-label">Health Grade</div><div class="stat-val" style="color:${gc}">${esc(ue.health_grade||'—')}</div><div class="stat-sub">Unit economics health</div></div>
+        <div class="stat-card"><div class="stat-label">LTV : CAC</div><div class="stat-val" style="color:var(--success)">${ue.ltv_cac_ratio!=null?ue.ltv_cac_ratio+'x':'—'}</div><div class="stat-sub">Target: 3x+</div></div>
+        <div class="stat-card"><div class="stat-label">Payback Period</div><div class="stat-val">${ue.payback_months!=null?ue.payback_months+' mo':'—'}</div><div class="stat-sub">Target: ≤18 months</div></div>
+      </div>`;
+    if (rp.year1_arr_usd||rp.year2_arr_usd||rp.year3_arr_usd) {
+      html += `<div class="info-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div class="info-card-title" style="margin-bottom:0">ARR Projection</div>
+          ${d.pricing_model_score!=null?`<span class="tag tag-blue">Score: ${d.pricing_model_score}/100</span>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          ${[['Year 1',rp.year1_arr_usd],['Year 2',rp.year2_arr_usd],['Year 3',rp.year3_arr_usd]].map(([l,v])=>`
+          <div style="background:var(--bg2);border-radius:10px;padding:1rem;text-align:center">
+            <div style="font-size:0.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${l}</div>
+            <div style="font-size:1.15rem;font-weight:800;color:var(--text)">${fmtUSD(v)}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+    html += `<div class="info-card"><div class="info-card-title">Unit Economics Breakdown</div><div class="info-card-body">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        ${[['Pricing Model',d.recommended_pricing_model],['ARPU / month',fmtUSD(ue.arpu_usd)],['CAC',fmtUSD(ue.cac_usd)],['LTV',fmtUSD(ue.ltv_usd)]].map(([k,v])=>`
+        <div><div class="field-key">${esc(k)}</div><div style="font-size:0.85rem;font-weight:600;color:var(--text)">${esc(String(v||'—'))}</div></div>`).join('')}
+      </div>
+    </div></div>`;
+    if (Array.isArray(d.revenue_streams)&&d.revenue_streams.length) {
+      html += `<div class="info-card"><div class="info-card-title">Revenue Streams</div><div class="info-card-body"><div class="tags-row">${d.revenue_streams.map(s=>`<span class="tag tag-green">${esc(s)}</span>`).join('')}</div></div></div>`;
+    }
+    if (d.customer_acquisition_strategy||d.scalability_notes) {
+      html += `<div class="info-card"><div class="info-card-title">Growth Strategy</div><div class="info-card-body">
+        ${d.customer_acquisition_strategy?`<div class="field-section"><div class="field-key">Customer Acquisition</div><div class="field-val">${esc(d.customer_acquisition_strategy)}</div></div>`:''}
+        ${d.scalability_notes?`<div class="field-section"><div class="field-key">Scalability</div><div class="field-val">${esc(d.scalability_notes)}</div></div>`:''}
+      </div></div>`;
+    }
+    html += renderCitations(d.citations, 'monetization');
+    return html;
+  }
+
+  /* ─── Risk Assessment ─── */
+  function renderRisk(d) {
+    if (!d || typeof d !== 'object') return noData('Risk Assessment data unavailable.');
+    const rr = d.regulatory_risks || {};
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card"><div class="stat-label">Overall Risk</div><div class="stat-val" style="font-size:1rem;padding-top:8px"><span class="tag ${SEV[d.overall_risk_rating]||'tag-blue'}">${esc(d.overall_risk_rating||'—')}</span></div></div>
+        <div class="stat-card"><div class="stat-label">Regulatory Risk</div><div class="stat-val" style="font-size:1rem;padding-top:8px"><span class="tag ${SEV[rr.overall_risk_level]||'tag-blue'}">${esc(rr.overall_risk_level||'—')}</span></div></div>
+        <div class="stat-card"><div class="stat-label">Risks Identified</div><div class="stat-val">${Array.isArray(d.risks)?d.risks.length:'—'}</div><div class="stat-sub">Across all categories</div></div>
+      </div>`;
+    if (d.top_risk) {
+      html += `<div class="info-card" style="border-color:rgba(220,38,38,0.3);background:var(--danger-bg)"><div class="info-card-title" style="color:var(--danger)">Top Risk</div><div class="info-card-body" style="color:var(--danger)">${esc(d.top_risk)}</div></div>`;
+    }
+    if (Array.isArray(d.risks)&&d.risks.length) {
+      html += `<div class="info-card"><div class="info-card-title">Risk Register</div><div class="info-card-body">
+        ${d.risks.map(r=>`
+          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:0.83rem;font-weight:600;color:var(--text);flex:1">${esc(r.description||'')}</div>
+              <div style="display:flex;gap:6px;flex-shrink:0">
+                <span class="tag ${SEV[r.severity]||'tag-blue'}">${esc(r.severity||'')}</span>
+                <span class="tag" style="background:var(--bg2);color:var(--dim);border:1px solid var(--border)">${esc(r.category||'')}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:6px">
+              <span style="font-size:0.72rem;color:var(--muted)">Score: <strong>${r.risk_score||'—'}</strong></span>
+              <span style="font-size:0.72rem;color:var(--muted)">Effort: <strong>${r.effort_weeks!=null?r.effort_weeks+'w':'—'}</strong></span>
+            </div>
+            ${r.mitigation?`<div style="font-size:0.78rem;color:var(--dim);background:var(--bg2);border-radius:6px;padding:6px 10px">${esc(r.mitigation)}</div>`:''}
+          </div>`).join('')}
+      </div></div>`;
+    }
+    if ((Array.isArray(rr.key_regulations)&&rr.key_regulations.length)||(Array.isArray(rr.compliance_actions)&&rr.compliance_actions.length)) {
+      html += `<div class="info-card"><div class="info-card-title">Regulatory Compliance</div><div class="info-card-body">
+        ${Array.isArray(rr.key_regulations)&&rr.key_regulations.length?`<div class="field-section"><div class="field-key">Key Regulations</div><div class="tags-row">${rr.key_regulations.map(r=>`<span class="tag tag-warn">${esc(r)}</span>`).join('')}</div></div>`:''}
+        ${Array.isArray(rr.compliance_actions)&&rr.compliance_actions.length?`<div class="field-section"><div class="field-key">Actions</div><div class="bullet-list">${rr.compliance_actions.map(a=>`<div class="bullet-item"><div class="bullet-dot" style="background:var(--warning)"></div><div>${esc(a)}</div></div>`).join('')}</div></div>`:''}
+      </div></div>`;
+    }
+    html += renderCitations(d.citations, 'risk');
+    return html;
+  }
+
+  /* ─── Roadmap ─── */
+  function renderRoadmap(d) {
+    if (!d || typeof d !== 'object') return noData('Roadmap data unavailable.');
+    const phaseColors = ['var(--accent)','var(--success)','#f59e0b'];
+    const flagBg = {green:'var(--success)',yellow:'var(--warning)',red:'var(--danger)'};
+    const rankCls = {'Must Do':'tag-red','Should Do':'tag-warn','Nice to Have':'tag-blue','Deprioritize':'tag-green'};
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card"><div class="stat-label">Total Timeline</div><div class="stat-val">${d.total_estimated_weeks!=null?d.total_estimated_weeks+' wks':'—'}</div><div class="stat-sub">Estimated weeks</div></div>
+        <div class="stat-card"><div class="stat-label">Total Budget</div><div class="stat-val" style="font-size:1.2rem">${fmtUSD(d.total_estimated_cost_usd)}</div><div class="stat-sub">Estimated cost</div></div>
+        <div class="stat-card"><div class="stat-label">Phases</div><div class="stat-val">${Array.isArray(d.phases)?d.phases.length:'—'}</div><div class="stat-sub">Execution phases</div></div>
+      </div>`;
+    if (d.critical_path) {
+      html += `<div class="info-card" style="border-color:rgba(99,102,241,0.3);background:var(--accent-d)"><div class="info-card-title" style="color:var(--accent)">Critical Path</div><div class="info-card-body" style="color:var(--accent)">${esc(d.critical_path)}</div></div>`;
+    }
+    if (Array.isArray(d.phases)) {
+      d.phases.forEach((phase, pi) => {
+        const color = phaseColors[pi]||'var(--accent)';
+        html += `<div class="info-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+            <div style="width:32px;height:32px;border-radius:8px;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.72rem;font-weight:800;flex-shrink:0">${esc(phase.phase?.split(' ')[0]||String(pi+1))}</div>
+            <div>
+              <div style="font-size:0.88rem;font-weight:700">${esc(phase.phase||'Phase '+(pi+1))}</div>
+              <div style="font-size:0.75rem;color:var(--dim)">${esc(phase.theme||'')}</div>
+            </div>
+          </div>
+          ${Array.isArray(phase.milestones)?phase.milestones.map(m=>`
+            <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap">
+                  <span style="font-size:0.82rem;font-weight:600">${esc(m.name||'')}</span>
+                  <span class="tag ${rankCls[m.priority_rank]||'tag-blue'}" style="font-size:0.65rem">${esc(m.priority_rank||'')}</span>
+                  <span style="width:7px;height:7px;border-radius:50%;background:${flagBg[m.risk_flag]||'var(--muted)'};display:inline-block" title="${esc(m.risk_flag||'')}"></span>
+                </div>
+                ${m.success_metric?`<div style="font-size:0.75rem;color:var(--dim)">${esc(m.success_metric)}</div>`:''}
+              </div>
+              <div style="text-align:right;flex-shrink:0;min-width:80px">
+                <div style="font-size:0.78rem;font-weight:700;color:var(--text)">${m.weeks_estimate!=null?m.weeks_estimate+'w':''}</div>
+                <div style="font-size:0.72rem;color:var(--muted)">${fmtUSD(m.cost_estimate_usd)}</div>
+                <div style="font-size:0.68rem;color:var(--accent)">RICE ${m.rice_score!=null?m.rice_score:'—'}</div>
+              </div>
+            </div>`).join(''):''}
+        </div>`;
+      });
+    }
+    html += renderCitations(d.citations, 'roadmap');
+    return html;
+  }
+
+  /* ─── Weakness Review ─── */
+  function renderWeakness(d) {
+    if (!d || typeof d !== 'object') return noData('Weakness Review data unavailable.');
+    const qColor = {'Quick Win':'var(--success)','Big Bet':'var(--accent)','Low Priority':'var(--muted)','Thankless Task':'var(--warning)'};
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card"><div class="stat-label">Severity</div><div class="stat-val" style="font-size:1rem;padding-top:8px"><span class="tag ${SEV[d.severity]||'tag-blue'}">${esc(d.severity||'—')}</span></div></div>
+        <div class="stat-card"><div class="stat-label">Dominant Pattern</div><div class="stat-val" style="font-size:0.82rem;padding-top:6px;line-height:1.4">${esc(d.dominant_pattern||'—')}</div></div>
+        <div class="stat-card"><div class="stat-label">Weaknesses Found</div><div class="stat-val">${Array.isArray(d.weaknesses)?d.weaknesses.length:'—'}</div><div class="stat-sub">Identified gaps</div></div>
+      </div>`;
+    if (Array.isArray(d.top_3_recommendations)&&d.top_3_recommendations.length) {
+      html += `<div class="info-card" style="border-color:rgba(22,163,74,0.25);background:var(--success-bg)"><div class="info-card-title" style="color:var(--success)">Top Recommendations</div><div class="info-card-body"><div class="bullet-list">${d.top_3_recommendations.map(r=>`<div class="bullet-item"><div class="bullet-dot success"></div><div>${esc(r)}</div></div>`).join('')}</div></div></div>`;
+    }
+    if (d.root_cause) {
+      html += `<div class="info-card"><div class="info-card-title">Root Cause Analysis</div><div class="info-card-body">${esc(d.root_cause)}</div></div>`;
+    }
+    if (Array.isArray(d.weaknesses)&&d.weaknesses.length) {
+      html += `<div class="info-card"><div class="info-card-title">Weakness Register</div><div class="info-card-body">
+        ${d.weaknesses.map(w=>`
+          <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:0.83rem;font-weight:600;color:var(--text);flex:1">${esc(w.description||'')}</div>
+              <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+                ${w.quadrant?`<span style="font-size:0.67rem;font-weight:700;padding:2px 8px;border-radius:100px;background:${(qColor[w.quadrant]||'var(--muted)')}22;color:${qColor[w.quadrant]||'var(--muted)'};border:1px solid ${(qColor[w.quadrant]||'var(--border)')}44">${esc(w.quadrant)}</span>`:''}
+                <span class="tag" style="background:var(--bg2);color:var(--dim);border:1px solid var(--border)">${esc(w.category||'')}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;margin-bottom:6px">
+              <span style="font-size:0.72rem;color:var(--muted)">Impact: <strong>${w.business_impact||'—'}/5</strong></span>
+              <span style="font-size:0.72rem;color:var(--muted)">Effort: <strong>${w.fix_effort||'—'}/5</strong></span>
+              <span style="font-size:0.72rem;color:var(--muted)">Priority: <strong>${esc(w.priority||'—')}</strong></span>
+            </div>
+            ${w.recommendation?`<div style="font-size:0.78rem;color:var(--dim);background:var(--bg2);border-radius:6px;padding:6px 10px">${esc(w.recommendation)}</div>`:''}
+          </div>`).join('')}
+      </div></div>`;
+    }
+    if (Array.isArray(d.systemic_issues)&&d.systemic_issues.length) {
+      html += `<div class="info-card"><div class="info-card-title">Systemic Issues</div><div class="info-card-body"><div class="bullet-list">${d.systemic_issues.map(i=>`<div class="bullet-item"><div class="bullet-dot danger"></div><div>${esc(i)}</div></div>`).join('')}</div></div></div>`;
+    }
+    html += renderCitations(d.citations, 'weakness');
+    return html;
+  }
+
+  /* ─── Final Strategy renderer (structured, not JSON) ─── */
+  function renderFinalStrategy(data, objective) {
+    if (!data) return noData('Aggregation did not complete for this thread.');
+
+    const feasibility = data.overall_feasibility || '—';
+    const confidence  = data.confidence_score != null ? data.confidence_score : '—';
+    const feasClass   = feasibility==='High' ? 'tag-green' : feasibility==='Low' ? 'tag-red' : 'tag-warn';
+
+    let html = `
+      <div class="info-grid">
+        <div class="stat-card">
+          <div class="stat-label">Confidence Score</div>
+          <div class="stat-val" style="color:var(--success)">${esc(String(confidence))}${typeof confidence==='number'?'%':''}</div>
+          <div class="stat-sub">AI assessment confidence</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overall Feasibility</div>
+          <div class="stat-val" style="font-size:1rem;padding-top:8px"><span class="tag ${feasClass}">${esc(feasibility)}</span></div>
+          <div class="stat-sub">Strategic viability rating</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Agents Completed</div>
+          <div class="stat-val">7 / 7</div>
+          <div class="stat-sub">All analysis chains</div>
+        </div>
+      </div>`;
+
+    if (data.executive_summary) {
+      html += `
+        <div class="fs-section">
+          <div class="fs-section-header"><span class="fs-section-icon">📋</span><span class="fs-section-title">Strategic Overview</span></div>
+          <div class="fs-section-body"><div class="field-val">${esc(data.executive_summary)}</div></div>
+        </div>`;
+    }
+
+    if (Array.isArray(data.key_insights) && data.key_insights.length) {
+      html += `
+        <div class="fs-section">
+          <div class="fs-section-header"><span class="fs-section-icon">💡</span><span class="fs-section-title">Key Insights</span></div>
+          <div class="fs-section-body">
+            <div class="bullet-list">${data.key_insights.map(i =>
+              `<div class="bullet-item"><div class="bullet-dot"></div><div>${esc(String(i))}</div></div>`
+            ).join('')}</div>
+          </div>
+        </div>`;
+    }
+
+    if (Array.isArray(data.recommendations) && data.recommendations.length) {
+      html += `
+        <div class="fs-section">
+          <div class="fs-section-header"><span class="fs-section-icon">🎯</span><span class="fs-section-title">Recommendations</span></div>
+          <div class="fs-section-body">
+            <div class="bullet-list">${data.recommendations.map(r =>
+              `<div class="bullet-item"><div class="bullet-dot success"></div><div>${esc(String(r))}</div></div>`
+            ).join('')}</div>
+          </div>
+        </div>`;
+    }
+
+    if (Array.isArray(data.critical_risks) && data.critical_risks.length) {
+      html += `
+        <div class="fs-section">
+          <div class="fs-section-header">
+            <span class="fs-section-icon">⚠️</span>
+            <span class="fs-section-title">Critical Risks</span>
+          </div>
+          <div class="fs-section-body">
+            ${data.critical_risks.map((item, i) => `
+              <div style="padding:12px 0;${i < data.critical_risks.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
+                  <span class="tag tag-red" style="flex-shrink:0;margin-top:1px">Risk ${i + 1}</span>
+                  <span style="font-size:0.85rem;font-weight:600;color:var(--text);line-height:1.5">${esc(item.risk || '')}</span>
+                </div>
+                ${item.mitigation ? `
+                <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:var(--success-bg);border-radius:8px;border-left:3px solid var(--success)">
+                  <span style="font-size:0.7rem;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;padding-top:2px">Fix</span>
+                  <span style="font-size:0.82rem;color:var(--success);line-height:1.55">${esc(item.mitigation)}</span>
+                </div>` : ''}
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    return html;
+  }
+
+  /* ─── Tab switching ─── */
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+id)?.classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  /* ─── View toggling ─── */
+  function showListView() {
+    document.getElementById('view-list').style.display = 'block';
+    document.getElementById('view-detail').style.display = 'none';
+    history.pushState({}, '', '/main-app/report/');
+    document.title = 'NEXUS — Reports';
+  }
+
+  function showDetailView(threadId) {
+    document.getElementById('view-list').style.display = 'none';
+    document.getElementById('view-detail').style.display = 'block';
+    history.pushState({thread: threadId}, '', `/main-app/report/?thread=${threadId}`);
+    loadDetail(threadId);
+  }
+
+  /* ─── Load report list (paginated) ─── */
+  let reportPage = 1;
+  const REPORT_PAGE_SIZE = 8;
+  let reportTotal = 0;
+
+  function reportRowHtml(t) {
+    const d = t.completed_at
+      ? new Date(t.completed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : 'In progress';
+    const ms  = t.runtime_ms ? ` · ${(t.runtime_ms/1000).toFixed(1)}s` : '';
+    const pc  = t.status==='complete' ? 'pill-success' : t.status==='failed' ? 'pill-failed' : t.status==='running' ? 'pill-running' : 'pill-queued';
+    const ico = t.status==='complete' ? '✅' : t.status==='failed' ? '❌' : t.status==='running' ? '⚡' : '⏳';
+    return `
+      <div class="report-row" onclick="showDetailView('${esc(t.thread_id)}')">
+        <div class="report-row-ico">${ico}</div>
+        <div class="report-row-body">
+          <div class="report-row-title">${esc(t.objective || 'Untitled Analysis')}</div>
+          <div class="report-row-meta">${esc(t.thread_id)}</div>
+        </div>
+        <div class="report-row-right">
+          <span class="pill ${pc}"><span class="pill-dot"></span>${esc(t.status)}</span>
+          <div class="report-row-time">${esc(d)}${esc(ms)}</div>
+        </div>
+      </div>`;
+  }
+
+  async function loadList(page = 1, append = false) {
+    const btn = document.getElementById('reports-load-more');
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    try {
+      const r = await fetch(`/main-app/api/reports/?page=${page}&page_size=${REPORT_PAGE_SIZE}`, {
+        credentials: 'same-origin',
+      });
+      const res = await r.json();
+      const threads  = res.results || [];
+      const total    = res.count   || 0;
+      const has_more = !!res.next;
+      reportPage     = page;
+      reportTotal    = total;
+      const card  = document.getElementById('report-list-card');
+
+      if (!threads.length && !append) {
+        card.innerHTML = `
+          <div class="report-list-empty">
+            <div class="empty-ico">📋</div>
+            <div class="empty-title">No reports yet</div>
+            <div class="empty-sub">Run a strategy analysis to generate your first report.</div>
+            <a href="/main-app/strategy/" class="btn btn-accent" style="margin-top:1rem">Start Analysis</a>
+          </div>`;
+        return;
+      }
+
+      if (!append) {
+        card.innerHTML = threads.map(reportRowHtml).join('');
+      } else {
+        // remove load-more footer before appending
+        document.getElementById('reports-footer')?.remove();
+        card.insertAdjacentHTML('beforeend', threads.map(reportRowHtml).join(''));
+      }
+
+      // footer with count + load more
+      document.getElementById('reports-footer')?.remove();
+      const shown = Math.min(page * REPORT_PAGE_SIZE, total);
+      card.insertAdjacentHTML('beforeend', `
+        <div id="reports-footer" style="display:flex;justify-content:space-between;align-items:center;padding:0.85rem 1.4rem;border-top:1px solid var(--border)">
+          <span style="font-size:0.72rem;color:var(--muted)">Showing ${shown} of ${total} report${total!==1?'s':''}</span>
+          ${has_more
+            ? `<button id="reports-load-more" onclick="loadList(${page+1},true)" style="font-size:0.72rem;font-weight:600;padding:5px 14px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;">Load More</button>`
+            : `<span style="font-size:0.72rem;color:var(--muted)">All loaded</span>`}
+        </div>`);
+    } catch {
+      document.getElementById('report-list-card').innerHTML = noData('Failed to load reports.');
+    }
+  }
+
+  /* ─── Load detail report ─── */
+  async function loadDetail(threadId) {
+    /* reset tabs */
+    showTab('exec', document.querySelector('.tab-btn'));
+    ['exec','market','competitive','monetization','risk','roadmap','weakness','final'].forEach(id => {
+      const el = document.getElementById(id+'-body');
+      if (el) el.innerHTML = '<div class="skeleton sk-card"></div>';
+    });
+    document.getElementById('detail-title').textContent = 'Loading…';
+    document.getElementById('detail-thread').textContent = threadId;
+    document.getElementById('detail-pill').style.display = 'none';
+
+    try {
+      const r = await fetch(`/main-app/api/report/${threadId}/`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-CSRFToken': csrf },
+        credentials: 'same-origin',
+      });
+      const res = await r.json();
+      if (!r.ok) { showDetailError(res.message || 'Report not found'); return; }
+      populateDetail(res.data);
+    } catch {
+      showDetailError('Network error — could not load report.');
+    }
+  }
+
+  let _fullObjective = '';
+
+  function showFullQuery() {
+    document.getElementById('full-query-text').textContent = _fullObjective;
+    document.getElementById('full-query-modal').style.display = 'flex';
+  }
+  function hideFullQuery() {
+    document.getElementById('full-query-modal').style.display = 'none';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideFullQuery(); });
+
+  function populateDetail(data) {
+    const objective = data.objective || 'Strategy Analysis';
+    _fullObjective = objective;
+    document.title = `NEXUS — ${objective.slice(0,50)}`;
+    document.getElementById('detail-title').textContent = objective;
+    document.getElementById('full-query-btn').style.display = 'flex';
+    document.getElementById('detail-thread').textContent = data.thread_id;
+    document.getElementById('exec-h1').textContent = objective.length>50 ? objective.slice(0,50)+'…' : objective;
+
+    if (data.completed_at) {
+      const d = new Date(data.completed_at);
+      const ms = data.runtime_ms ? ` · ${(data.runtime_ms/1000).toFixed(1)}s` : '';
+      document.getElementById('detail-date').textContent =
+        d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ms;
+    }
+
+    const pill = document.getElementById('detail-pill');
+    const pillMap = { complete:'pill-success', running:'pill-running', failed:'pill-failed' };
+    pill.className = `pill ${pillMap[data.status] || 'pill-queued'}`;
+    document.getElementById('detail-pill-text').textContent =
+      data.status === 'complete' ? '7/7 Complete' : data.status.charAt(0).toUpperCase()+data.status.slice(1);
+    pill.style.display = 'inline-flex';
+
+    /* build agent map */
+    const agentMap = {};
+    (data.agent_responses || []).forEach(a => { agentMap[a.agent_name] = a; });
+
+    const agentTabs = [
+      ['exec',         'executive_summary'],
+      ['market',       'market_analysis'],
+      ['competitive',  'competitive_landscape'],
+      ['monetization', 'monetization_strategy'],
+      ['risk',         'risk_assessment'],
+      ['roadmap',      'roadmap'],
+      ['weakness',     'weakness_review'],
+    ];
+
+    const RENDERERS = {
+      exec:         renderExecSummary,
+      market:       renderMarketAnalysis,
+      competitive:  renderCompetitive,
+      monetization: renderMonetization,
+      risk:         renderRisk,
+      roadmap:      renderRoadmap,
+      weakness:     renderWeakness,
+    };
+
+    agentTabs.forEach(([tabId, agentName]) => {
+      const agent   = agentMap[agentName];
+      const bodyEl  = document.getElementById(tabId+'-body');
+      const statusEl= document.getElementById('ts-'+tabId);
+      if (agent?.status === 'complete') {
+        const parsed = parseAgent(agent.response);
+        const render = RENDERERS[tabId];
+        bodyEl.innerHTML = render ? render(parsed) : noData('Renderer not available.');
+        if (statusEl) { statusEl.style.background='var(--success)'; statusEl.classList.remove('pending'); }
+      } else {
+        bodyEl.innerHTML = noData(agent ? `Agent status: ${agent.status}` : 'No data for this agent.');
+        if (statusEl) statusEl.classList.add('pending');
+      }
+    });
+
+    /* Final Strategy tab */
+    const finalData = data.final_strategy?.data;
+    document.getElementById('final-body').innerHTML = renderFinalStrategy(finalData, objective);
+    if (finalData) {
+      document.getElementById('final-lead').textContent =
+        `Confidence: ${finalData.confidence_score ?? '—'}% · Feasibility: ${finalData.overall_feasibility ?? '—'}`;
+      const tsF = document.getElementById('ts-final');
+      if (tsF) { tsF.style.background='var(--success)'; tsF.classList.remove('pending'); }
+    }
+  }
+
+  function showDetailError(msg) {
+    document.getElementById('detail-title').textContent = 'Error';
+    document.getElementById('exec-body').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-ico">⚠️</div>
+        <div class="empty-title">Could not load report</div>
+        <div class="empty-sub">${esc(msg)}</div>
+        <button class="btn btn-ghost" onclick="showListView()" style="margin-top:1rem">← Back to Reports</button>
+      </div>`;
+  }
+
+  /* ─── Init ─── */
+  window.addEventListener('popstate', () => {
+    const p = new URLSearchParams(window.location.search);
+    const t = p.get('thread');
+    if (t) showDetailView(t);
+    else { document.getElementById('view-list').style.display='block'; document.getElementById('view-detail').style.display='none'; }
+  });
+
+  const initThread = new URLSearchParams(window.location.search).get('thread');
+  if (initThread) {
+    showDetailView(initThread);
+  } else {
+    showListView();
+  }
+  loadList();
+</script>
+
+<!-- Full Query Modal -->
+<div id="full-query-modal" style="display:none" class="fq-backdrop" onclick="if(event.target===this)hideFullQuery()">
+  <div class="fq-box">
+    <button class="fq-close" onclick="hideFullQuery()">✕ Close</button>
+    <div class="fq-label">Strategic Objective</div>
+    <div class="fq-text" id="full-query-text"></div>
+  </div>
+</div>
+</body>
+</html>

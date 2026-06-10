@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Signing you in…</title>
+  <style>
+    body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f5f5f7; font-family: 'Inter', -apple-system, sans-serif; }
+    .box { text-align: center; color: #1d1d1f; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #e5e5ea; border-top-color: #0071e3; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    p { font-size: 0.9rem; color: #6e6e73; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <p>Signing you in…</p>
+  </div>
+  <script>
+    const params  = new URLSearchParams(window.location.search);
+    const access  = params.get('access');
+    const refresh = params.get('refresh');
+
+    if (access && refresh) {
+      localStorage.setItem('access',  access);
+      localStorage.setItem('refresh', refresh);
+      window.location.replace('/main-app/dashboard/');
+    } else {
+      window.location.replace('/auth-api/user_signup/');
+    }
+  </script>
+</body>
+</html>

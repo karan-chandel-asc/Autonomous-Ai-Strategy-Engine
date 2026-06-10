@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Autonomous AI Strategy Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f7;
+      --bg3: #fafafa;
+      --border: rgba(0,0,0,0.09);
+      --border2: rgba(0,0,0,0.16);
+      --accent: #0071e3;
+      --accent-d: rgba(0,113,227,0.07);
+      --accent-hover: #0058b8;
+      --text: #1d1d1f;
+      --dim: #6e6e73;
+      --muted: #aeaeb2;
+      --success: #1a7f4b;
+      --success-bg: rgba(26,127,75,0.07);
+      --warning: #92680a;
+      --warning-bg: rgba(146,104,10,0.07);
+      --danger: #c0392b;
+      --danger-bg: rgba(192,57,43,0.07);
+      --purple: #7c3aed;
+      --purple-bg: rgba(124,58,237,0.07);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.09), 0 4px 8px rgba(0,0,0,0.04);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark {
+      width: 28px; height: 28px;
+      background: var(--text);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800; color: #fff; letter-spacing: -0.03em;
+    }
+    .logo-name { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 0; }
+    .nav-links a {
+      font-size: 0.78rem; font-weight: 500; color: var(--dim);
+      text-decoration: none; padding: 6px 14px; border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg2); }
+    .nav-right { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      text-decoration: none; border: none; display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s; letter-spacing: -0.01em;
+    }
+    .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--dim); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text); }
+    .btn-dark { background: var(--text); color: #fff; }
+    .btn-dark:hover { background: #3a3a3f; }
+
+    /* HERO */
+    .hero {
+      padding: 120px 2.5rem 80px;
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 420px;
+      gap: 5rem; align-items: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1.4rem;
+    }
+    .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .hero-h1 {
+      font-size: clamp(2.8rem, 5vw, 4.8rem);
+      font-weight: 800; line-height: 1.04;
+      letter-spacing: -0.045em; color: var(--text); margin-bottom: 1.4rem;
+    }
+    .hero-h1 em { font-style: normal; color: var(--accent); }
+    .hero-p { font-size: 1.05rem; color: var(--dim); line-height: 1.8; max-width: 480px; margin-bottom: 2.2rem; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-hero { font-size: 0.88rem; padding: 12px 26px; border-radius: 9px; }
+    .hero-metrics {
+      display: flex; gap: 2rem;
+      margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .metric-val { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text); }
+    .metric-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-weight: 500; }
+
+    /* HERO DIAGRAM */
+    .hero-diagram {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2rem; box-shadow: var(--shadow);
+    }
+    .diagram-label {
+      font-family: 'Fira Code', monospace; font-size: 0.6rem; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .diagram-flow { display: flex; flex-direction: column; gap: 6px; }
+    .df-row { display: flex; align-items: center; gap: 8px; }
+    .df-box {
+      flex: 1; background: #fff; border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+    .df-box.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .df-box.purple { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .df-box.light { background: var(--bg3); color: var(--dim); font-weight: 500; font-size: 0.7rem; }
+    .df-arrow { color: var(--muted); font-size: 0.8rem; flex-shrink: 0; }
+    .df-parallel {
+      background: #fff; border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px; padding: 10px 12px; box-shadow: var(--shadow-sm);
+    }
+    .df-par-label {
+      font-family: 'Fira Code', monospace; font-size: 0.58rem;
+      color: var(--accent); letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 7px;
+    }
+    .df-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .df-chip {
+      font-size: 0.65rem; font-weight: 500; padding: 3px 9px; border-radius: 5px;
+      background: var(--bg2); border: 1px solid var(--border); color: var(--dim);
+    }
+    .df-status {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border);
+      font-family: 'Fira Code', monospace; font-size: 0.62rem; color: var(--muted);
+    }
+    .df-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+    .df-status-text { color: var(--success); font-weight: 600; }
+
+    /* BAND */
+    .band {
+      background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 1.4rem 2.5rem;
+    }
+    .band-inner { max-width: 1160px; margin: 0 auto; display: flex; gap: 0; }
+    .band-item { flex: 1; text-align: center; padding: 0 1.5rem; border-right: 1px solid var(--border); }
+    .band-item:last-child { border-right: none; }
+    .band-num { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text); }
+    .band-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 2px; font-weight: 500; }
+
+    /* SECTIONS */
+    .section { max-width: 1160px; margin: 0 auto; padding: 6rem 2.5rem; }
+    .sec-eyebrow { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; }
+    .sec-h2 { font-size: clamp(2rem, 3vw, 2.8rem); font-weight: 800; letter-spacing: -0.04em; margin-bottom: 0.8rem; color: var(--text); }
+    .sec-p { font-size: 1rem; color: var(--dim); max-width: 560px; line-height: 1.8; margin-bottom: 3.5rem; }
+
+    /* MODULES */
+    .modules-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+    }
+    .module-card { background: #fff; padding: 1.5rem 1rem; text-align: center; transition: background 0.15s; }
+    .module-card:hover { background: var(--bg2); }
+    .module-num { font-family: 'Fira Code', monospace; font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 10px; }
+    .module-ico { font-size: 1.5rem; margin-bottom: 8px; display: block; }
+    .module-name { font-size: 0.68rem; font-weight: 700; color: var(--text); line-height: 1.3; text-transform: uppercase; letter-spacing: 0.03em; }
+    .module-desc { font-size: 0.62rem; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+
+    /* HOW GRID */
+    .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .how-card { background: #fff; padding: 2rem 1.5rem; transition: background 0.15s; }
+    .how-card:hover { background: var(--bg2); }
+    .how-step { font-size: 2.5rem; font-weight: 900; color: var(--bg2); letter-spacing: -0.06em; margin-bottom: 1rem; line-height: 1; }
+    .how-card:hover .how-step { color: var(--accent-d); }
+    .how-h { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+    .how-p { font-size: 0.78rem; color: var(--dim); line-height: 1.7; }
+    .how-tag {
+      display: inline-block; margin-top: 1rem;
+      font-family: 'Fira Code', monospace; font-size: 0.58rem; color: var(--accent);
+      background: var(--accent-d); border: 1px solid rgba(0,113,227,0.15);
+      padding: 3px 8px; border-radius: 4px; letter-spacing: 0.05em;
+    }
+    .how-tag.purple { color: var(--purple); background: var(--purple-bg); border-color: rgba(124,58,237,0.15); }
+
+    /* BENTO */
+    .bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .bento-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      padding: 2rem; box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .bento-card:hover { box-shadow: var(--shadow); border-color: var(--border2); }
+    .bento-card.wide { grid-column: span 2; }
+    .bento-card.full { grid-column: span 3; }
+    .bento-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 4px 10px; border-radius: 5px; margin-bottom: 1.2rem;
+    }
+    .badge-blue { background: var(--accent-d); color: var(--accent); border: 1px solid rgba(0,113,227,0.15); }
+    .badge-gray { background: var(--bg2); color: var(--dim); border: 1px solid var(--border); }
+    .badge-green { background: var(--success-bg); color: var(--success); border: 1px solid rgba(26,127,75,0.15); }
+    .badge-warn { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(146,104,10,0.15); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(124,58,237,0.15); }
+    .badge-red { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(192,57,43,0.15); }
+    .bento-h { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .bento-p { font-size: 0.82rem; color: var(--dim); line-height: 1.7; }
+
+    .mock-terminal {
+      background: var(--text); border-radius: 10px; padding: 1rem 1.1rem;
+      margin-top: 1.2rem; font-family: 'Fira Code', monospace; font-size: 0.65rem;
+      line-height: 1.9; color: #a8b2c0;
+    }
+    .t-blue { color: #60a5fa; } .t-green { color: #4ade80; }
+    .t-gold { color: #fbbf24; } .t-white { color: #fff; } .t-purple { color: #c084fc; }
+
+    .chain-bar { display: flex; gap: 6px; margin-top: 1.2rem; flex-wrap: wrap; }
+    .chain-pill {
+      font-family: 'Fira Code', monospace; font-size: 0.6rem;
+      padding: 4px 10px; border-radius: 100px;
+      background: var(--bg2); border: 1px solid var(--border); color: var(--dim);
+    }
+    .chain-pill.active { background: var(--accent-d); border-color: rgba(0,113,227,0.2); color: var(--accent); font-weight: 600; }
+
+    .output-preview { margin-top: 1.2rem; display: flex; flex-direction: column; gap: 8px; }
+    .output-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg2); border-radius: 7px; border: 1px solid var(--border); }
+    .output-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .output-key { font-size: 0.7rem; font-weight: 600; flex: 0 0 130px; color: var(--dim); }
+    .output-bar { flex: 1; height: 4px; background: #e8e8ed; border-radius: 2px; overflow: hidden; }
+    .output-fill { height: 100%; border-radius: 2px; }
+
+    /* SSE STREAM MOCK */
+    .sse-stream {
+      margin-top: 1.2rem; background: #0d1117; border-radius: 10px;
+      padding: 1rem 1.1rem; font-family: 'Fira Code', monospace; font-size: 0.63rem; line-height: 2;
+    }
+    .sse-line { display: flex; align-items: center; gap: 8px; }
+    .sse-check { color: #4ade80; flex-shrink: 0; }
+    .sse-pending { color: #fbbf24; flex-shrink: 0; }
+    .sse-step { color: #60a5fa; flex: 0 0 140px; }
+    .sse-msg { color: #6b7280; }
+
+    /* ARCH DIAGRAM */
+    .arch-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      margin-top: 2rem;
+    }
+    .arch-card { background: #fff; padding: 1.8rem 1.4rem; text-align: center; transition: background 0.15s; }
+    .arch-card:hover { background: var(--bg2); }
+    .arch-ico { font-size: 2.2rem; margin-bottom: 12px; display: block; }
+    .arch-name { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .arch-tech { font-family: 'Fira Code', monospace; font-size: 0.72rem; color: var(--accent); }
+    .arch-sub { font-size: 0.78rem; color: var(--dim); margin-top: 6px; line-height: 1.6; }
+
+    /* TECH STRIP */
+    .tech-categories { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .tech-cat-title {
+      font-size: 0.7rem; font-weight: 700; color: var(--dim);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .tech-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tech-chip {
+      background: #fff; border: 1px solid var(--border); border-radius: 7px;
+      padding: 7px 16px; font-family: 'Fira Code', monospace; font-size: 0.65rem;
+      color: var(--dim); transition: all 0.15s; box-shadow: var(--shadow-sm);
+    }
+    .tech-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .tech-chip.highlight { border-color: rgba(0,113,227,0.3); color: var(--accent); background: var(--accent-d); }
+    .tech-chip.purple { border-color: rgba(124,58,237,0.3); color: var(--purple); background: var(--purple-bg); }
+
+    /* CTA */
+    .cta { background: var(--text); color: #fff; text-align: center; padding: 7rem 2.5rem; }
+    .cta h2 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; letter-spacing: -0.045em; margin-bottom: 1.2rem; line-height: 1.05; color: #fff; }
+    .cta h2 span { color: #60a5fa; }
+    .cta p { font-size: 1rem; color: #a8b2c0; max-width: 440px; margin: 0 auto 2.5rem; line-height: 1.7; }
+    .cta-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-cta-primary {
+      font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 700;
+      padding: 13px 28px; border-radius: 9px; cursor: pointer; border: none;
+      background: #fff; color: var(--text); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+    }
+    .btn-cta-primary:hover { background: #e8e8ed; }
+    .btn-cta-ghost {
+      font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 600;
+      padding: 13px 24px; border-radius: 9px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2); background: none;
+      color: rgba(255,255,255,0.75); text-decoration: none; transition: all 0.15s;
+    }
+    .btn-cta-ghost:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg2); padding: 2rem 2.5rem;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-left { font-size: 0.72rem; color: var(--muted); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: 0.72rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--dim); }
+
+    .full-divider { border: none; border-top: 1px solid var(--border); }
+
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; gap: 3rem; }
+      .modules-grid { grid-template-columns: repeat(4, 1fr); }
+      .how-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento { grid-template-columns: 1fr; }
+      .bento-card.wide, .bento-card.full { grid-column: span 1; }
+      .tech-categories { grid-template-columns: 1fr; }
+      .arch-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links { display: none; }
+      .section { padding: 4rem 1.5rem; }
+      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+      .band-inner { flex-wrap: wrap; }
+      .arch-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </div>
+  <div class="nav-links">
+    <a href="#modules">Agents</a>
+    <a href="#how">Architecture</a>
+    <a href="#features">Features</a>
+    <a href="#system">System Design</a>
+    <a href="#stack">Tech Stack</a>
+  </div>
+  <div class="nav-right">
+    <a href="/auth-api/user_login/" class="btn btn-ghost">Sign In</a>
+    <a href="/main-app/strategy/" class="btn btn-dark">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow"><span class="eyebrow-dot"></span> 7 Parallel AI Agent Chains · Pinecone Hybrid RAG · Real-time SSE</div>
+    <h1 class="hero-h1">Your Strategy,<br/><em>Autonomously</em><br/>Engineered</h1>
+    <p class="hero-p">Upload your knowledge base, define your objective, and let NEXUS run 7 specialised AI agents in parallel — each grounded in your documents via Pinecone Hybrid RAG — delivering a complete strategic brief in under 30 seconds.</p>
+    <div class="hero-actions">
+      <a href="/main-app/strategy/" class="btn btn-dark btn-hero">Build Strategy Now</a>
+      <a href="#how" class="btn btn-ghost btn-hero">See How It Works</a>
+    </div>
+    <div class="hero-metrics">
+      <div><div class="metric-val">7x</div><div class="metric-lbl">Parallel Agents</div></div>
+      <div><div class="metric-val">&lt;30s</div><div class="metric-lbl">Full Report</div></div>
+    </div>
+  </div>
+
+  <div class="hero-diagram">
+    <div class="diagram-label">Live Pipeline Preview</div>
+    <div class="diagram-flow">
+      <div class="df-row"><div class="df-box light">📂 Knowledge Base — PDF / DOCX / TXT</div></div>
+      <div class="df-row" style="justify-content:center;padding:2px 0"><span style="color:var(--muted);font-size:0.8rem">↓</span></div>
+      <div class="df-row"><div class="df-box accent">Celery Worker → Pinecone Index</div></div>
+      <div class="df-row" style="justify-content:center;padding:2px 0"><span style="color:var(--muted);font-size:0.8rem">↓</span></div>
+      <div class="df-row"><div class="df-box purple">Hybrid RAG — Semantic + Keyword Re-rank</div></div>
+      <div class="df-row" style="justify-content:center;padding:2px 0"><span style="color:var(--muted);font-size:0.8rem">↓</span></div>
+      <div class="df-parallel">
+        <div class="df-par-label">RunnableParallel — 7 agent chains</div>
+        <div class="df-chips">
+          <span class="df-chip">Executive Summary</span>
+          <span class="df-chip">Market Analysis</span>
+          <span class="df-chip">Competitive</span>
+          <span class="df-chip">Monetization</span>
+          <span class="df-chip">Risk</span>
+          <span class="df-chip">Roadmap</span>
+          <span class="df-chip">Weakness</span>
+        </div>
+      </div>
+      <div class="df-row" style="justify-content:center;padding:2px 0"><span style="color:var(--muted);font-size:0.8rem">↓</span></div>
+      <div class="df-row"><div class="df-box accent">Aggregation Chain → Final Brief</div></div>
+      <div class="df-status">
+        <div class="df-status-dot"></div>
+        <span class="df-status-text">Complete</span>
+        <span style="margin-left:auto">SSE streamed · 24.1s</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BAND -->
+<div class="band">
+  <div class="band-inner">
+    <div class="band-item"><div class="band-num">7</div><div class="band-lbl">AI Agent Chains</div></div>
+    <div class="band-item"><div class="band-num">RAG</div><div class="band-lbl">Pinecone Hybrid</div></div>
+    <div class="band-item"><div class="band-num">SSE</div><div class="band-lbl">Real-time Streaming</div></div>
+    <div class="band-item"><div class="band-num">LCEL</div><div class="band-lbl">LangChain Pipelines</div></div>
+    <div class="band-item"><div class="band-num">JWT</div><div class="band-lbl">Secure Auth</div></div>
+  </div>
+</div>
+
+<!-- MODULES -->
+<section class="section" id="modules">
+  <div class="sec-eyebrow">Analysis Modules</div>
+  <h2 class="sec-h2">Seven agents. One unified strategy.</h2>
+  <p class="sec-p">All 7 chains fire simultaneously via LangChain LCEL's <code style="font-family:'Fira Code';font-size:0.9em;color:var(--accent)">RunnableParallel</code>. Each agent retrieves its own document context from Pinecone — your full strategy brief is ready in seconds, not hours.</p>
+  <div class="modules-grid">
+    <div class="module-card"><div class="module-num">01</div><span class="module-ico">📊</span><div class="module-name">Executive Summary</div><div class="module-desc">Problem, opportunity & solution overview</div></div>
+    <div class="module-card"><div class="module-num">02</div><span class="module-ico">📈</span><div class="module-name">Market Analysis</div><div class="module-desc">TAM / CAGR / trends with tool use</div></div>
+    <div class="module-card"><div class="module-num">03</div><span class="module-ico">⚔️</span><div class="module-name">Competitive Landscape</div><div class="module-desc">Porter's 5 forces & positioning</div></div>
+    <div class="module-card"><div class="module-num">04</div><span class="module-ico">💰</span><div class="module-name">Monetization Strategy</div><div class="module-desc">Revenue models, pricing & LTV:CAC</div></div>
+    <div class="module-card"><div class="module-num">05</div><span class="module-ico">🛡️</span><div class="module-name">Risk Assessment</div><div class="module-desc">Threats, mitigations & risk rating</div></div>
+    <div class="module-card"><div class="module-num">06</div><span class="module-ico">🗺️</span><div class="module-name">30-60-90 Roadmap</div><div class="module-desc">RICE-scored milestones & cost estimates</div></div>
+    <div class="module-card"><div class="module-num">07</div><span class="module-ico">🔍</span><div class="module-name">Weakness Review</div><div class="module-desc">Gap analysis & blind spots</div></div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="sec-eyebrow">Architecture</div>
+  <h2 class="sec-h2">From document to decision.</h2>
+  <p class="sec-p">A five-stage async pipeline — knowledge base indexing handled separately by Celery so the generation pipeline never blocks on I/O.</p>
+  <div class="how-grid" style="grid-template-columns: repeat(4, 1fr)">
+    <div class="how-card">
+      <div class="how-step">01</div>
+      <h3 class="how-h">Build Knowledge Base</h3>
+      <p class="how-p">Upload PDFs, DOCX, or TXT files. A Celery background task chunks each document and indexes it into Pinecone Serverless using <strong>BAAI/bge-small-en-v1.5</strong> embeddings (384-dim). Indexed once, reused forever.</p>
+      <span class="how-tag">Celery · Pinecone · HuggingFace</span>
+    </div>
+    <div class="how-card">
+      <div class="how-step">02</div>
+      <h3 class="how-h">Select Documents + Objective</h3>
+      <p class="how-p">Choose which KB documents to ground the analysis in. Define your strategic objective. Document IDs are passed directly — no re-indexing, no file uploads at pipeline time.</p>
+      <span class="how-tag">Django REST · JWT Auth</span>
+    </div>
+    <div class="how-card">
+      <div class="how-step">03</div>
+      <h3 class="how-h">Hybrid RAG Per Agent</h3>
+      <p class="how-p">Each of the 7 agents runs its own semantic query against Pinecone. Results are re-ranked by keyword overlap + cosine similarity. Every agent gets context tailored to its analysis domain.</p>
+      <span class="how-tag purple">Pinecone · Hybrid RAG · Re-rank</span>
+    </div>
+    <div class="how-card">
+      <div class="how-step">04</div>
+      <h3 class="how-h">Parallel Agents + SSE Stream</h3>
+      <p class="how-p">RunnableParallel fires all 7 chains at once via Celery. Pipeline events — start, RAG done, each agent complete, final brief — stream to the browser in real-time via Server-Sent Events over Redis.</p>
+      <span class="how-tag">RunnableParallel · SSE · Redis</span>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- BENTO FEATURES -->
+<section class="section" id="features">
+  <div class="sec-eyebrow">Key Features</div>
+  <h2 class="sec-h2">Production-grade patterns.</h2>
+  <p class="sec-p">Real architectural decisions — not toy demos.</p>
+  <div class="bento">
+
+    <!-- Parallel Execution -->
+    <div class="bento-card wide">
+      <span class="bento-badge badge-blue">Parallel Execution</span>
+      <h3 class="bento-h">7 chains fire simultaneously</h3>
+      <p class="bento-p">LangChain's <code style="font-family:'Fira Code';font-size:0.9em">RunnableParallel</code> runs all 7 analysis chains at once via Celery — cutting sequential analysis from 3+ minutes down to the time of the single slowest chain (~20-30s).</p>
+      <div class="chain-bar">
+        <span class="chain-pill active">executive_summary</span>
+        <span class="chain-pill active">market_analysis</span>
+        <span class="chain-pill active">competitive_landscape</span>
+        <span class="chain-pill active">monetization_strategy</span>
+        <span class="chain-pill active">risk_assessment</span>
+        <span class="chain-pill active">roadmap</span>
+        <span class="chain-pill active">weakness_review</span>
+      </div>
+    </div>
+
+    <!-- Pinecone Hybrid RAG -->
+    <div class="bento-card">
+      <span class="bento-badge badge-purple">Pinecone Hybrid RAG</span>
+      <h3 class="bento-h">Semantic + keyword re-ranking</h3>
+      <p class="bento-p">Documents are embedded with <strong>BAAI/bge-small-en-v1.5</strong> (384-dim) and indexed in Pinecone Serverless. At query time, cosine similarity results are re-ranked by keyword overlap — hybrid scoring for better grounding.</p>
+      <div class="mock-terminal">
+        <span class="t-purple">query_vec</span> = emb.<span class="t-blue">embed</span>(<span class="t-green">"market size CAGR"</span>)<br/>
+        results = pinecone.<span class="t-blue">query</span>(vec, top_k=<span class="t-gold">3</span>)<br/>
+        <span class="t-green"># keyword re-rank → top 2 returned</span>
+      </div>
+    </div>
+
+    <!-- Real-time SSE -->
+    <div class="bento-card">
+      <span class="bento-badge badge-green">Real-time Streaming</span>
+      <h3 class="bento-h">Live pipeline via SSE</h3>
+      <p class="bento-p">Pipeline events are pushed to Redis by the Celery worker and streamed to the browser via Server-Sent Events — users see every step live as it happens, not a loading spinner.</p>
+      <div class="sse-stream">
+        <div class="sse-line"><span class="sse-check">✓</span><span class="sse-step">rag_retrieval</span><span class="sse-msg">Context fetched from KB</span></div>
+        <div class="sse-line"><span class="sse-check">✓</span><span class="sse-step">agents_start</span><span class="sse-msg">7 chains launched</span></div>
+        <div class="sse-line"><span class="sse-check">✓</span><span class="sse-step">agent_roadmap</span><span class="sse-msg">Roadmap — complete</span></div>
+        <div class="sse-line"><span class="sse-pending">◎</span><span class="sse-step">aggregating</span><span class="sse-msg">Building final brief...</span></div>
+      </div>
+    </div>
+
+    <!-- Structured Output -->
+    <div class="bento-card">
+      <span class="bento-badge badge-gray">Structured Output</span>
+      <h3 class="bento-h">Pydantic v2 validated JSON</h3>
+      <p class="bento-p">Every agent output is validated against a Pydantic v2 schema via LangChain's <code style="font-family:'Fira Code';font-size:0.9em">JsonOutputParser</code>. Failed parse triggers an automatic JSON-only retry. No unstructured text reaches the DB.</p>
+      <div class="mock-terminal">
+        <span class="t-blue">"market_analysis"</span>: {<br/>
+        &nbsp;&nbsp;<span class="t-gold">"tam"</span>: <span class="t-green">"$42B"</span>,<br/>
+        &nbsp;&nbsp;<span class="t-gold">"cagr_percentage"</span>: <span class="t-green">18.4</span><br/>
+        }
+      </div>
+    </div>
+
+    <!-- Tool Use -->
+    <div class="bento-card">
+      <span class="bento-badge badge-warn">LangChain Tool Use</span>
+      <h3 class="bento-h">Agents with bound tools</h3>
+      <p class="bento-p">Market Analysis, Competitive, and Roadmap agents use <code style="font-family:'Fira Code';font-size:0.9em">chat_model.bind_tools()</code> — the LLM calls quantitative and qualitative tools mid-chain. Tool results are injected back before the final JSON response.</p>
+    </div>
+
+    <!-- Aggregation -->
+    <div class="bento-card wide">
+      <span class="bento-badge badge-blue">Aggregation Chain</span>
+      <h3 class="bento-h">Unified brief — not 7 disconnected reports</h3>
+      <p class="bento-p">After all 7 chains complete, a final aggregation chain synthesizes everything into a coherent strategic brief. Agent outputs are slimmed to ~400 tokens before aggregation to stay within context limits — a deliberate token-efficiency choice.</p>
+      <div class="output-preview">
+        <div class="output-row"><div class="output-dot" style="background:#0071e3"></div><div class="output-key">Market Opportunity</div><div class="output-bar"><div class="output-fill" style="width:88%;background:#0071e3"></div></div></div>
+        <div class="output-row"><div class="output-dot" style="background:var(--success)"></div><div class="output-key">Competitive Position</div><div class="output-bar"><div class="output-fill" style="width:65%;background:var(--success)"></div></div></div>
+        <div class="output-row"><div class="output-dot" style="background:var(--warning)"></div><div class="output-key">Monetization Fit</div><div class="output-bar"><div class="output-fill" style="width:78%;background:var(--warning)"></div></div></div>
+        <div class="output-row"><div class="output-dot" style="background:var(--danger)"></div><div class="output-key">Risk Exposure</div><div class="output-bar"><div class="output-fill" style="width:42%;background:var(--danger)"></div></div></div>
+      </div>
+    </div>
+
+    <!-- Performance Caching -->
+    <div class="bento-card full">
+      <span class="bento-badge badge-green">Performance Engineering</span>
+      <h3 class="bento-h">Module-level singletons — expensive objects load once per worker</h3>
+      <p class="bento-p">The HuggingFace transformer (<code style="font-family:'Fira Code';font-size:0.9em">BAAI/bge-small-en-v1.5</code>) and Pinecone index client are cached as module-level globals in the Celery worker process. They load once on first task, then are reused across all subsequent pipeline runs — eliminating a ~17s model-load penalty and 14 wasted Pinecone HTTP calls per pipeline.</p>
+      <div class="mock-terminal" style="margin-top:1rem">
+        <span class="t-green"># Both live at module scope — survive across tasks in the same worker</span><br/>
+        <span class="t-purple">_EMB_CACHE</span> = <span class="t-gold">None</span>&nbsp;&nbsp;&nbsp;<span class="t-green"># BAAI/bge-small-en-v1.5 — loaded once (~17s), reused forever</span><br/>
+        <span class="t-purple">_INDEX_CACHE</span> = <span class="t-gold">None</span>&nbsp;&nbsp;<span class="t-green"># Pinecone Index client — one list_indexes() call ever</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- SYSTEM DESIGN -->
+<section class="section" id="system">
+  <div class="sec-eyebrow">System Design</div>
+  <h2 class="sec-h2">Every layer purpose-built.</h2>
+  <p class="sec-p">A full-stack async system — from auth to vector search to real-time UI.</p>
+  <div class="arch-grid">
+    <div class="arch-card">
+      <span class="arch-ico">🔐</span>
+      <div class="arch-name">Auth Layer</div>
+      <div class="arch-tech">Django + SimpleJWT</div>
+      <div class="arch-sub">JWT access + refresh tokens, CSRF protection, login/signup/reset flows</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">📚</span>
+      <div class="arch-name">Knowledge Base</div>
+      <div class="arch-tech">Django + Celery</div>
+      <div class="arch-sub">File upload → async indexing task → Pinecone. Status tracked in DB (pending → indexing → indexed)</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">🧠</span>
+      <div class="arch-name">Embeddings</div>
+      <div class="arch-tech">BAAI/bge-small-en-v1.5</div>
+      <div class="arch-sub">384-dim sentence embeddings via HuggingFace sentence-transformers. Module-level cached per worker</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">🔍</span>
+      <div class="arch-name">Vector Store</div>
+      <div class="arch-tech">Pinecone Serverless</div>
+      <div class="arch-sub">Cosine similarity, AWS us-east-1. Filtered by doc_id — per-user knowledge isolation</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">⚡</span>
+      <div class="arch-name">Task Queue</div>
+      <div class="arch-tech">Celery + Redis</div>
+      <div class="arch-sub">Pipeline runs as background Celery tasks. Redis as broker + SSE event store</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">🤖</span>
+      <div class="arch-name">LLM Orchestration</div>
+      <div class="arch-tech">LangChain LCEL + Groq</div>
+      <div class="arch-sub">RunnableParallel for 7 chains, RunnableLambda for tool use, JsonOutputParser for validated output</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">📡</span>
+      <div class="arch-name">Real-time Events</div>
+      <div class="arch-tech">SSE via Redis Lists</div>
+      <div class="arch-sub">Celery worker pushes events to Redis. Django SSE view streams them to the browser — no WebSocket needed</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">🗄️</span>
+      <div class="arch-name">REST API</div>
+      <div class="arch-tech">Django REST Framework</div>
+      <div class="arch-sub">DRF serializers with nested relationships for Thread → AgentResponse → FinalStrategy</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">✅</span>
+      <div class="arch-name">Validation</div>
+      <div class="arch-tech">Pydantic v2</div>
+      <div class="arch-sub">Input validation on all pipeline requests. Agent JSON outputs validated and auto-retried on parse failure</div>
+    </div>
+    <div class="arch-card">
+      <span class="arch-ico">📊</span>
+      <div class="arch-name">Reports</div>
+      <div class="arch-tech">Full Strategy Breakdown</div>
+      <div class="arch-sub">Every analysis saved as a structured report — 7 agent outputs + a final strategy brief. Browse, filter, and revisit any past run instantly.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="full-divider" />
+
+<!-- TECH STACK -->
+<section class="section" id="stack">
+  <div class="sec-eyebrow">Technology Stack</div>
+  <h2 class="sec-h2">Everything that powers it.</h2>
+  <p class="sec-p">The complete set of technologies used — from LLM orchestration to deployment infrastructure.</p>
+
+  <div class="tech-categories">
+    <div>
+      <div class="tech-cat-title">AI / ML</div>
+      <div class="tech-grid">
+        <span class="tech-chip highlight">LangChain LCEL</span>
+        <span class="tech-chip highlight">RunnableParallel</span>
+        <span class="tech-chip highlight">Groq LLM</span>
+        <span class="tech-chip highlight">JsonOutputParser</span>
+        <span class="tech-chip">Tool Binding</span>
+        <span class="tech-chip">Pydantic v2</span>
+        <span class="tech-chip purple">BAAI/bge-small-en-v1.5</span>
+        <span class="tech-chip purple">HuggingFace Transformers</span>
+        <span class="tech-chip purple">sentence-transformers</span>
+      </div>
+    </div>
+    <div>
+      <div class="tech-cat-title">Vector Search</div>
+      <div class="tech-grid">
+        <span class="tech-chip highlight">Pinecone Serverless</span>
+        <span class="tech-chip highlight">Hybrid RAG</span>
+        <span class="tech-chip">Cosine Similarity</span>
+        <span class="tech-chip">Semantic Search</span>
+        <span class="tech-chip">Keyword Re-rank</span>
+        <span class="tech-chip">384-dim Vectors</span>
+        <span class="tech-chip">doc_id Filtering</span>
+      </div>
+    </div>
+    <div>
+      <div class="tech-cat-title">Backend / Infra</div>
+      <div class="tech-grid">
+        <span class="tech-chip highlight">Django</span>
+        <span class="tech-chip highlight">Django REST Framework</span>
+        <span class="tech-chip highlight">Celery</span>
+        <span class="tech-chip highlight">Redis</span>
+        <span class="tech-chip">SimpleJWT</span>
+        <span class="tech-chip">Server-Sent Events</span>
+        <span class="tech-chip">PostgreSQL</span>
+        <span class="tech-chip">Django ORM</span>
+        <span class="tech-chip">gunicorn</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+  <h2>Strategy doesn't wait.<br/><span>Neither should you.</span></h2>
+  <p>Upload your knowledge base, set your objective, and get a full AI-powered strategic brief — streamed live in under 30 seconds.</p>
+  <div class="cta-btns">
+    <a href="/main-app/strategy/" class="btn-cta-primary">Build My Strategy →</a>
+    <a href="/auth-api/user_login/" class="btn-cta-ghost">Sign In</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">© 2026 NEXUS — Autonomous AI Strategy Engine · Built with LangChain · Pinecone · Django · Celery</div>
+  <div class="footer-links">
+    <a href="#modules">Agents</a>
+    <a href="#how">Architecture</a>
+    <a href="#stack">Stack</a>
+  </div>
+</footer>
+
+</body>
+</html>

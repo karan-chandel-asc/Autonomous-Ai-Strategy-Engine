@@ -1,0 +1,7 @@
+doubts
+1. like if i have multiple documents for a thread, can i create multiple embedding for same document.
+for example :if i have 1000 pages file 1 then next time i get 1000 pages file 1 again  with only 200 pages change can i create again whole embedding file because we have same hash.
+
+
+input should be in pydantic va;lidation
+get proper output from llm without falcuitaions

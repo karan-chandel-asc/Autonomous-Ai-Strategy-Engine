@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f7;
+      --bg3: #fafafa;
+      --border: rgba(0,0,0,0.08);
+      --border2: rgba(0,0,0,0.14);
+      --accent: #0071e3;
+      --accent-d: rgba(0,113,227,0.07);
+      --text: #1d1d1f;
+      --dim: #6e6e73;
+      --muted: #aeaeb2;
+      --success: #1a7f4b;
+      --success-bg: rgba(26,127,75,0.08);
+      --warning: #92680a;
+      --warning-bg: rgba(146,104,10,0.08);
+      --danger: #c0392b;
+      --danger-bg: rgba(192,57,43,0.08);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 16px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg2); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* ── TOPBAR ── */
+    .topbar { background: #fff; border-bottom: 1px solid var(--border); height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: sticky; top: 0; z-index: 50; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 26px; height: 26px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #fff; }
+    .logo-name { font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em; }
+    .topbar-nav { display: flex; gap: 2px; }
+    .topbar-nav a { font-size: 0.78rem; font-weight: 500; color: var(--dim); text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+    .topbar-nav a:hover, .topbar-nav a.active { color: var(--text); background: var(--bg2); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); cursor: pointer; }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
+    .user-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+
+    /* ── BUTTONS ── */
+    .btn { font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 7px 16px; border-radius: 7px; cursor: pointer; text-decoration: none; border: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; letter-spacing: -0.01em; }
+    .btn-dark { background: var(--text); color: #fff; }
+    .btn-dark:hover { background: #3a3a3f; }
+    .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--dim); }
+    .btn-ghost:hover { color: var(--text); background: var(--bg2); }
+    .btn-full { width: 100%; justify-content: center; padding: 10px 16px; border-radius: 8px; font-size: 0.82rem; }
+
+    /* ── PAGE ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.8rem; }
+    .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; }
+    .page-sub { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── KPI ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .kpi-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.3rem 1.4rem; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+    .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
+    .kpi-card:hover::before { opacity: 1; }
+    .kpi-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.7rem; }
+    .kpi-val { font-size: 2.1rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1; margin-bottom: 0.45rem; }
+    .kpi-change { font-size: 0.7rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .change-up { color: var(--success); font-weight: 600; }
+    .change-dn { color: var(--danger); font-weight: 600; }
+    .kpi-skeleton { background: linear-gradient(90deg, var(--bg2) 25%, #ececec 50%, var(--bg2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 2.1rem; width: 60px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── MAIN GRID ── */
+    .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start; }
+
+    /* ── CARD ── */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .card-header { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    .card-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .card-footer { padding: 0.9rem 1.4rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 580px; }
+    thead tr { background: var(--bg2); }
+    th { padding: 0.65rem 1.1rem; font-size: 0.65rem; font-weight: 700; color: var(--muted); text-align: left; text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 0.85rem 1.1rem; font-size: 0.79rem; color: var(--dim); border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: var(--bg3); }
+    .td-id { font-family: 'Fira Code', monospace; font-size: 0.7rem; color: var(--text); font-weight: 500; }
+    .td-obj { font-weight: 600; color: var(--text); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    .td-mod { font-family: 'Fira Code', monospace; font-size: 0.7rem; font-weight: 600; }
+    .td-rt  { font-family: 'Fira Code', monospace; font-size: 0.7rem; }
+
+    /* ── STATUS PILLS ── */
+    .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.64rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; white-space: nowrap; letter-spacing: 0.01em; }
+    .pill-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .pill-complete { background: var(--success-bg); color: var(--success); }
+    .pill-complete .pill-dot { background: var(--success); }
+    .pill-running { background: var(--accent-d); color: var(--accent); }
+    .pill-running .pill-dot { background: var(--accent); animation: pulse 1.2s infinite; }
+    .pill-failed { background: var(--danger-bg); color: var(--danger); }
+    .pill-failed .pill-dot { background: var(--danger); }
+    .pill-queued { background: var(--bg2); color: var(--dim); border: 1px solid var(--border); }
+    .pill-queued .pill-dot { background: var(--muted); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── ACTIONS ── */
+    .td-actions { display: flex; gap: 5px; }
+    .act { font-size: 0.68rem; font-weight: 600; text-decoration: none; padding: 3px 9px; border-radius: 5px; transition: all 0.13s; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+    .act-view { color: var(--accent); background: var(--accent-d); border: 1px solid rgba(0,113,227,0.12); }
+    .act-view:hover { background: rgba(0,113,227,0.14); }
+    .act-del  { color: var(--danger); background: var(--danger-bg); border: 1px solid rgba(192,57,43,0.12); }
+    .act-del:hover { background: rgba(192,57,43,0.15); }
+    /* Delete confirm modal */
+    .del-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center}
+    .del-box{background:#fff;border-radius:16px;padding:2rem 2rem 1.5rem;max-width:420px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.18)}
+    .del-icon{width:44px;height:44px;border-radius:12px;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:1rem}
+    .del-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.4rem}
+    .del-desc{font-size:0.82rem;color:var(--muted);line-height:1.5;margin-bottom:1.5rem}
+    .del-query{font-size:0.8rem;font-weight:600;color:var(--dim);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:1.5rem;word-break:break-word;max-height:60px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .del-actions{display:flex;justify-content:flex-end;gap:10px}
+    .del-btn-cancel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:0.82rem;font-weight:600;color:var(--dim);cursor:pointer}
+    .del-btn-cancel:hover{background:var(--bg3)}
+    .del-btn-confirm{background:var(--danger);border:none;border-radius:8px;padding:8px 18px;font-size:0.82rem;font-weight:600;color:#fff;cursor:pointer}
+    .del-btn-confirm:hover{background:#a93226}
+    .del-btn-confirm:disabled{opacity:0.6;cursor:not-allowed}
+
+    /* ── EMPTY / LOADING ── */
+    .empty-row td { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 0.82rem; }
+
+    /* ── SIDEBAR ── */
+    .side-col { display: flex; flex-direction: column; gap: 14px; }
+    .qs-body { padding: 1.2rem 1.4rem; }
+    .qs-desc { font-size: 0.79rem; color: var(--dim); line-height: 1.7; margin-bottom: 1.1rem; }
+    .qs-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.2rem; }
+    .qs-step { display: flex; gap: 10px; align-items: flex-start; }
+    .qs-num { width: 20px; height: 20px; border-radius: 50%; background: var(--text); color: #fff; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .qs-text { font-size: 0.76rem; color: var(--dim); line-height: 1.5; }
+    .qs-text strong { color: var(--text); }
+
+    /* ── ACTIVITY ── */
+    .activity-item { display: flex; gap: 11px; padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-ico { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+    .ico-blue { background: var(--accent-d); }
+    .ico-green { background: var(--success-bg); }
+    .ico-warn { background: var(--warning-bg); }
+    .ico-red { background: var(--danger-bg); }
+    .ico-gray { background: var(--bg2); }
+    .activity-text { font-size: 0.76rem; color: var(--dim); line-height: 1.5; }
+    .activity-text strong { color: var(--text); font-weight: 600; }
+    .activity-time { font-family: 'Fira Code', monospace; font-size: 0.61rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── MODULE USAGE ── */
+    .usage-list { padding: 1rem 1.4rem; display: flex; flex-direction: column; gap: 11px; }
+    .usage-meta { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .usage-name { font-size: 0.74rem; font-weight: 600; color: var(--text); }
+    .usage-count { font-family: 'Fira Code', monospace; font-size: 0.63rem; color: var(--muted); }
+    .usage-track { height: 4px; background: #e8e8ed; border-radius: 2px; overflow: hidden; }
+    .usage-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s ease; }
+
+    /* ── LOAD MORE BTN ── */
+    #btn-load-more { min-width: 100px; }
+    #btn-load-more:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px)  { .page { padding: 1.5rem 1rem; } .topbar-nav { display: none; } .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="/main-app/home/" class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="/main-app/dashboard/" class="active">Dashboard</a>
+    <a href="/main-app/strategy/">New Strategy</a>
+    <a href="/main-app/report/">Reports</a>
+    <a href="/main-app/knowledge-base/">Knowledge Base</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="/main-app/profile/" class="topbar-user">
+      <div class="user-avatar" id="nav-avatar">U</div>
+      <span class="user-name" id="nav-name">Profile</span>
+    </a>
+    <button class="btn btn-ghost" onclick="logoutUser()">Sign Out</button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">Loading your workspace…</div>
+    </div>
+    <a href="/main-app/strategy/" class="btn btn-dark">+ New Strategy</a>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Runs</div>
+      <div class="kpi-val" id="kpi-total" style="color:var(--text)"><span class="kpi-skeleton"></span></div>
+      <div class="kpi-change" id="kpi-total-sub">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Completed</div>
+      <div class="kpi-val" id="kpi-completed" style="color:var(--success)"><span class="kpi-skeleton"></span></div>
+      <div class="kpi-change" id="kpi-rate">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg. Runtime</div>
+      <div class="kpi-val" id="kpi-runtime" style="color:var(--accent)"><span class="kpi-skeleton"></span></div>
+      <div class="kpi-change" id="kpi-runtime-sub">per completed run</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Chunks Created</div>
+      <div class="kpi-val" id="kpi-docs" style="color:var(--text)"><span class="kpi-skeleton"></span></div>
+      <div class="kpi-change" id="kpi-docs-sub">across all documents</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- SESSIONS TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Strategy Sessions</div>
+          <div class="card-sub">All analysis runs, newest first</div>
+        </div>
+        <a href="/main-app/strategy/" class="btn btn-ghost" style="font-size:0.74rem;padding:6px 12px">+ New Run</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Thread ID</th>
+              <th>Objective</th>
+              <th>Agents</th>
+              <th>Status</th>
+              <th>Runtime</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-tbody">
+            <tr class="empty-row"><td colspan="6">Loading sessions…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <span style="font-size:0.72rem;color:var(--muted)" id="sessions-count">—</span>
+        <button id="btn-load-more" class="btn btn-ghost" style="font-size:0.72rem;padding:5px 14px" onclick="loadMore()" disabled>Load More</button>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="side-col">
+
+      <!-- QUICK START -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Quick Start</div></div>
+        <div class="qs-body">
+          <p class="qs-desc">Run a full 7-chain analysis in three steps.</p>
+          <div class="qs-steps">
+            <div class="qs-step"><div class="qs-num">1</div><div class="qs-text"><strong>Index documents</strong> — upload PDFs, decks, research files to Knowledge Base</div></div>
+            <div class="qs-step"><div class="qs-num">2</div><div class="qs-text"><strong>Define your objective</strong> — the strategic question to answer</div></div>
+            <div class="qs-step"><div class="qs-num">3</div><div class="qs-text"><strong>Start analysis</strong> — 7 AI agents run in parallel</div></div>
+          </div>
+          <a href="/main-app/strategy/" class="btn btn-dark btn-full" style="margin-bottom:8px">Build New Strategy →</a>
+          <a href="/main-app/knowledge-base/" class="btn btn-ghost btn-full">Manage Knowledge Base →</a>
+        </div>
+      </div>
+
+      <!-- KB WIDGET -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Knowledge Base</div>
+          <a href="/main-app/knowledge-base/" style="font-size:0.72rem;font-weight:600;color:var(--accent);text-decoration:none">View all →</a>
+        </div>
+        <div id="kb-widget-body">
+          <div style="padding:1rem;text-align:center;font-size:0.78rem;color:var(--muted)">Loading…</div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent Activity</div></div>
+        <div id="activity-list">
+          <div style="padding:1rem;text-align:center;font-size:0.78rem;color:var(--muted)">Loading…</div>
+        </div>
+      </div>
+
+      <!-- MODULE USAGE -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Module Usage</div></div>
+        <div class="usage-list" id="module-usage">
+          <div style="text-align:center;font-size:0.78rem;color:var(--muted)">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const csrf = () => document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+
+  /* ── Pagination state ── */
+  let currentPage = 1;
+  const PAGE_SIZE = 8;
+  let totalSessions = 0;
+
+  /* ── helpers ── */
+  function pillHtml(status) {
+    const map = {
+      complete: `<span class="pill pill-complete"><span class="pill-dot"></span>Complete</span>`,
+      running:  `<span class="pill pill-running"><span class="pill-dot"></span>Running</span>`,
+      failed:   `<span class="pill pill-failed"><span class="pill-dot"></span>Failed</span>`,
+      queued:   `<span class="pill pill-queued"><span class="pill-dot"></span>Queued</span>`,
+    };
+    return map[status] || `<span class="pill pill-queued"><span class="pill-dot"></span>${status}</span>`;
+  }
+
+  function modColor(status, done, total) {
+    if (status === 'complete') return 'var(--success)';
+    if (status === 'failed')   return 'var(--danger)';
+    if (status === 'running')  return 'var(--accent)';
+    return 'var(--muted)';
+  }
+
+  function fmtRuntime(ms) {
+    if (!ms) return '—';
+    return (ms / 1000).toFixed(1) + 's';
+  }
+
+  function shortId(id) {
+    return id.length > 10 ? id.slice(0, 10) + '…' : id;
+  }
+
+  function rowHtml(t) {
+    const isFailed = t.status === 'failed';
+    const actionBtn = (t.status === 'complete' || t.status === 'running')
+      ? `<a href="/main-app/report/?thread=${t.thread_id}" class="act act-view">View</a>`
+      : isFailed
+        ? `<span class="act" style="opacity:0.35;cursor:not-allowed;pointer-events:none;background:var(--bg2);color:var(--muted);border:1px solid var(--border)">Failed</span>`
+        : `<a href="/main-app/strategy/" class="act act-view">Start</a>`;
+
+    return `<tr data-id="${t.thread_id}" style="${isFailed ? 'opacity:0.6;' : ''}">
+      <td><span class="td-id" title="${t.thread_id}">${shortId(t.thread_id)}</span></td>
+      <td><span class="td-obj" title="${t.objective || '—'}">${t.objective || '<span style="color:var(--muted);font-weight:400">No objective set</span>'}</span></td>
+      <td><span class="td-mod" style="color:${modColor(t.status, t.agents_done, t.agents_total)}">${t.agents_done}/${t.agents_total}</span></td>
+      <td>${pillHtml(t.status)}</td>
+      <td><span class="td-rt">${fmtRuntime(t.runtime_ms)}</span></td>
+      <td><div class="td-actions">${actionBtn}<button class="act act-del" onclick="deleteThread('${t.thread_id}', this)">Delete</button></div></td>
+    </tr>`;
+  }
+
+  /* ── Load sessions (paginated) ── */
+  async function loadSessions(page = 1, append = false) {
+    const btn = document.getElementById('btn-load-more');
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    try {
+      const res  = await fetch(`/main-app/api/reports/?page=${page}&page_size=${PAGE_SIZE}`);
+      const json = await res.json();
+      if (!res.ok) return;
+
+      const threads  = json.results || [];
+      const total    = json.count   || 0;
+      const has_more = !!json.next;
+      totalSessions  = total;
+      currentPage    = page;
+
+      const tbody = document.getElementById('sessions-tbody');
+      if (!append) tbody.innerHTML = '';
+
+      if (!threads.length && !append) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No sessions yet. <a href="/main-app/strategy/" style="color:var(--accent);text-decoration:none;font-weight:600">Run your first analysis →</a></td></tr>`;
+      } else {
+        tbody.insertAdjacentHTML('beforeend', threads.map(rowHtml).join(''));
+      }
+
+      const shown = document.querySelectorAll('#sessions-tbody tr:not(.empty-row)').length;
+      document.getElementById('sessions-count').textContent =
+        total ? `Showing ${shown} of ${total} session${total !== 1 ? 's' : ''}` : 'No sessions yet';
+
+      btn.disabled    = !has_more;
+      btn.textContent = has_more ? 'Load More' : 'All loaded';
+    } catch (e) {
+      document.getElementById('sessions-tbody').innerHTML =
+        `<tr class="empty-row"><td colspan="6">Failed to load sessions</td></tr>`;
+      btn.textContent = 'Load More';
+    }
+  }
+
+  function loadMore() { loadSessions(currentPage + 1, true); }
+
+  /* ── Delete thread ── */
+  let _delPending = null;  // { threadId, row }
+
+  function deleteThread(threadId, btn) {
+    const row = btn.closest('tr');
+    const queryCell = row.querySelector('td:nth-child(2)');
+    const queryText = queryCell ? queryCell.textContent.trim() : threadId;
+    document.getElementById('del-query-preview').textContent = queryText;
+    _delPending = { threadId, row };
+    document.getElementById('del-modal').style.display = 'flex';
+    document.getElementById('del-confirm-btn').disabled = false;
+    document.getElementById('del-confirm-btn').textContent = 'Delete';
+  }
+
+  function closeDelModal() {
+    document.getElementById('del-modal').style.display = 'none';
+    _delPending = null;
+  }
+
+  async function confirmDelete() {
+    if (!_delPending) return;
+    const { threadId, row } = _delPending;
+    const confirmBtn = document.getElementById('del-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Deleting…';
+    row.style.opacity = '0.4';
+    row.style.pointerEvents = 'none';
+    try {
+      await fetch(`/main-app/api/report/${threadId}/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': csrf() },
+      });
+      closeDelModal();
+      row.remove();
+      totalSessions = Math.max(0, totalSessions - 1);
+      const shown = document.querySelectorAll('#sessions-tbody tr:not(.empty-row)').length;
+      document.getElementById('sessions-count').textContent =
+        totalSessions ? `Showing ${shown} of ${totalSessions} sessions` : 'No sessions yet';
+    } catch (e) {
+      row.style.opacity = '1';
+      row.style.pointerEvents = '';
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Delete';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDelModal(); });
+
+  /* ── Dashboard stats ── */
+  async function loadStats() {
+    try {
+      const res  = await fetch('/main-app/api/dashboard/stats/');
+      const json = await res.json();
+      if (!json.success) return;
+      const d = json.data;
+
+      document.getElementById('kpi-total').textContent     = d.total;
+      document.getElementById('kpi-completed').textContent = d.completed;
+      document.getElementById('kpi-runtime').textContent   = d.avg_runtime_s ? `${d.avg_runtime_s}s` : '—';
+      document.getElementById('kpi-total-sub').innerHTML   =
+        d.running ? `<span class="change-up">↻ ${d.running} running</span>` : `${d.failed} failed`;
+      document.getElementById('kpi-rate').textContent      =
+        d.success_rate ? `${d.success_rate}% success rate` : 'No runs yet';
+      document.getElementById('page-sub').textContent      =
+        `${d.total} total run${d.total !== 1 ? 's' : ''} · ${d.completed} completed · ${d.running} running`;
+
+      // Module usage
+      if (d.module_usage && d.total > 0) {
+        const max = Math.max(...d.module_usage.map(m => m.complete), 1);
+        document.getElementById('module-usage').innerHTML = d.module_usage.map(m => `
+          <div>
+            <div class="usage-meta">
+              <span class="usage-name">${m.label}</span>
+              <span class="usage-count">${m.complete}/${m.total}</span>
+            </div>
+            <div class="usage-track">
+              <div class="usage-fill" style="width:${m.total > 0 ? Math.round((m.complete/m.total)*100) : 0}%"></div>
+            </div>
+          </div>`).join('');
+      } else {
+        document.getElementById('module-usage').innerHTML =
+          `<div style="text-align:center;font-size:0.78rem;color:var(--muted);padding:0.5rem 0">No module data yet</div>`;
+      }
+    } catch (e) {}
+  }
+
+  /* ── Knowledge Base widget ── */
+  async function loadKb() {
+    try {
+      const res  = await fetch('/main-app/api/knowledge-base-for-strategy/');
+      const json = await res.json();
+      const docs   = json.results || [];
+      const total  = json.count  || 0;
+      const chunks = docs.reduce((s, d) => s + (d.chunk_count || 0), 0);
+      const body   = document.getElementById('kb-widget-body');
+
+      document.getElementById('kpi-docs').textContent     = chunks.toLocaleString();
+      document.getElementById('kpi-docs-sub').textContent = `${total} indexed · ${chunks.toLocaleString()} chunks`;
+
+      if (!docs.length) {
+        body.innerHTML = `<div style="padding:1rem 1.4rem">
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">No documents yet</div>
+          <a href="/main-app/knowledge-base/" class="btn btn-ghost btn-full" style="font-size:0.75rem">Upload first document →</a>
+        </div>`;
+        return;
+      }
+
+      body.innerHTML = `
+        <div style="display:flex;gap:10px;padding:1rem 1.2rem 0.8rem">
+          <div style="flex:1;background:var(--bg2);border-radius:8px;padding:9px 10px;text-align:center">
+            <div style="font-size:1.15rem;font-weight:800;letter-spacing:-0.03em">${total}</div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-top:1px">Indexed</div>
+          </div>
+          <div style="flex:1;background:var(--success-bg);border-radius:8px;padding:9px 10px;text-align:center">
+            <div style="font-size:1.15rem;font-weight:800;letter-spacing:-0.03em;color:var(--success)">${docs.length}</div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-top:1px">Indexed</div>
+          </div>
+          <div style="flex:1;background:var(--accent-d);border-radius:8px;padding:9px 10px;text-align:center">
+            <div style="font-size:1.15rem;font-weight:800;letter-spacing:-0.03em;color:var(--accent)">${chunks.toLocaleString()}</div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-top:1px">Chunks</div>
+          </div>
+        </div>
+        <div style="padding:0 1.2rem">
+          ${docs.slice(0, 3).map(d => `
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:0.76rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500" title="${d.name}">${d.name}</span>
+              <span style="font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:99px;
+                background:${d.status==='indexed'?'var(--success-bg)':d.status==='failed'?'var(--danger-bg)':'var(--warning-bg)'};
+                color:${d.status==='indexed'?'var(--success)':d.status==='failed'?'var(--danger)':'var(--warning)'}">${d.status}</span>
+            </div>`).join('')}
+        </div>
+        <div style="padding:0.8rem 1.2rem">
+          <a href="/main-app/knowledge-base/" class="btn btn-ghost btn-full" style="font-size:0.75rem">Manage Knowledge Base →</a>
+        </div>`;
+    } catch (e) {
+      document.getElementById('kpi-docs').textContent = '—';
+      document.getElementById('kb-widget-body').innerHTML =
+        `<div style="padding:1rem;font-size:0.75rem;color:var(--muted)">Could not load</div>`;
+    }
+  }
+
+  /* ── Activity feed (derived from threads) ── */
+  async function loadActivity() {
+    try {
+      const res  = await fetch('/main-app/api/reports/?page=1&page_size=5');
+      const json = await res.json();
+      const threads = json.results || [];
+      const el = document.getElementById('activity-list');
+      if (!threads.length) {
+        el.innerHTML = `<div style="padding:1rem 1.2rem;font-size:0.78rem;color:var(--muted)">No activity yet</div>`;
+        return;
+      }
+      el.innerHTML = threads.map(t => {
+        const ico = t.status === 'complete' ? 'ico-green' : t.status === 'running' ? 'ico-blue' : t.status === 'failed' ? 'ico-red' : 'ico-gray';
+        const sym = t.status === 'complete' ? '✓' : t.status === 'running' ? '⟳' : t.status === 'failed' ? '✕' : '○';
+        const msg = t.status === 'complete'
+          ? `<strong>${shortId(t.thread_id)}</strong> completed — ${t.agents_done}/${t.agents_total} agents`
+          : t.status === 'running'
+            ? `<strong>${shortId(t.thread_id)}</strong> running — ${t.agents_done}/${t.agents_total} agents`
+            : t.status === 'failed'
+              ? `<strong>${shortId(t.thread_id)}</strong> failed`
+              : `<strong>${shortId(t.thread_id)}</strong> queued`;
+        const when = t.created_at || '';
+        return `<div class="activity-item">
+          <div class="activity-ico ${ico}">${sym}</div>
+          <div>
+            <div class="activity-text">${msg}</div>
+            <div class="activity-time">${when}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch (e) {}
+  }
+
+  /* ── User profile (topbar) ── */
+  async function loadUser() {
+    try {
+      const res  = await fetch('/auth-api/user_profile/');
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('nav-avatar').textContent = json.data.initials || 'U';
+        document.getElementById('nav-name').textContent   = json.data.full_name || 'Profile';
+      }
+    } catch (_) {}
+  }
+
+  async function logoutUser() {
+    try { await fetch('/auth-api/user_logout/', { method: 'POST', headers: { 'X-CSRFToken': csrf() } }); } catch (_) {}
+    window.location.href = '/auth-api/user_login/';
+  }
+
+  /* ── Boot ── */
+  loadUser();
+  loadStats();
+  loadKb();
+  loadSessions(1, false);
+  loadActivity();
+</script>
+
+<!-- Delete Session Modal -->
+<div id="del-modal" style="display:none" class="del-backdrop" onclick="if(event.target===this)closeDelModal()">
+  <div class="del-box">
+    <div class="del-icon">🗑️</div>
+    <div class="del-title">Delete Session?</div>
+    <div class="del-desc">This action is permanent and cannot be undone. The strategy report and all associated data will be removed.</div>
+    <div class="del-query" id="del-query-preview"></div>
+    <div class="del-actions">
+      <button class="del-btn-cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="del-btn-confirm" id="del-confirm-btn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

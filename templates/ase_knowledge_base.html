@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Knowledge Base</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f7; --bg3: #fafafa;
+      --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.16);
+      --accent: #0071e3; --accent-d: rgba(0,113,227,0.07);
+      --text: #1d1d1f; --dim: #6e6e73; --muted: #aeaeb2;
+      --success: #1a7f4b; --success-bg: rgba(26,127,75,0.08);
+      --warning: #92680a; --warning-bg: rgba(146,104,10,0.08);
+      --danger: #c0392b; --danger-bg: rgba(192,57,43,0.08);
+      --indigo: #5856d6; --indigo-bg: rgba(88,86,214,0.08);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg2); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* TOPBAR */
+    .topbar { background: #fff; border-bottom: 1px solid var(--border); height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; position: sticky; top: 0; z-index: 50; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 26px; height: 26px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #fff; }
+    .logo-name { font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em; }
+    .topbar-nav { display: flex; gap: 2px; }
+    .topbar-nav a { font-size: 0.78rem; font-weight: 500; color: var(--dim); text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+    .topbar-nav a:hover, .topbar-nav a.active { color: var(--text); background: var(--bg2); }
+    .btn { font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 7px 16px; border-radius: 7px; cursor: pointer; text-decoration: none; border: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; letter-spacing: -0.01em; }
+    .btn-primary { background: var(--accent); color: #fff; } .btn-primary:hover { background: #0058b8; }
+    .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--dim); } .btn-ghost:hover { color: var(--text); background: var(--bg2); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border: none; } .btn-danger:hover { background: rgba(192,57,43,0.15); }
+    .btn-sm { font-size: 0.72rem; padding: 5px 12px; }
+
+    /* PAGE */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.8rem; }
+    .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; }
+    .page-sub { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+    /* STATS ROW */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.3rem; box-shadow: var(--shadow-sm); }
+    .stat-label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text); }
+    .stat-note { font-size: 0.72rem; color: var(--dim); margin-top: 2px; }
+
+    /* UPLOAD ZONE */
+    .upload-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+    .upload-title { font-size: 0.92rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .drop-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg3); }
+    .drop-zone.drag-over { border-color: var(--accent); background: var(--accent-d); }
+    .drop-zone svg { width: 36px; height: 36px; color: var(--muted); margin-bottom: 10px; }
+    .drop-text { font-size: 0.85rem; font-weight: 500; color: var(--dim); }
+    .drop-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .drop-link { color: var(--accent); font-weight: 600; cursor: pointer; }
+    #file-input { display: none; }
+    .upload-progress { margin-top: 1rem; display: none; }
+    .progress-bar-wrap { background: var(--bg2); border-radius: 99px; height: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-bar { height: 4px; background: var(--accent); border-radius: 99px; transition: width 0.3s; width: 0%; }
+    .upload-msg { font-size: 0.78rem; color: var(--dim); margin-top: 6px; }
+
+    /* DOCUMENT LIST */
+    .docs-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .docs-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.3rem; border-bottom: 1px solid var(--border); }
+    .docs-title { font-size: 0.88rem; font-weight: 700; letter-spacing: -0.02em; }
+    .docs-count { font-size: 0.72rem; font-weight: 600; color: var(--muted); background: var(--bg2); padding: 2px 8px; border-radius: 99px; }
+    .doc-row { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.3rem; border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-row:hover { background: var(--bg3); }
+    .doc-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem; font-weight: 700; }
+    .doc-icon.pdf { background: rgba(192,57,43,0.09); color: var(--danger); }
+    .doc-icon.txt { background: var(--accent-d); color: var(--accent); }
+    .doc-icon.docx { background: rgba(0,122,255,0.08); color: #007aff; }
+    .doc-icon.md  { background: var(--indigo-bg); color: var(--indigo); }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .doc-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .badge-indexed  { background: var(--success-bg); color: var(--success); }
+    .badge-indexing { background: var(--warning-bg); color: var(--warning); }
+    .badge-pending  { background: var(--bg2); color: var(--muted); }
+    .badge-failed   { background: var(--danger-bg); color: var(--danger); }
+    .doc-chunks { font-size: 0.72rem; color: var(--dim); min-width: 60px; text-align: right; flex-shrink: 0; }
+    .doc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .empty-state { padding: 3rem 1.5rem; text-align: center; }
+    .empty-icon { font-size: 2.2rem; margin-bottom: 10px; opacity: 0.4; }
+    .empty-text { font-size: 0.85rem; color: var(--dim); }
+
+    /* TOAST */
+    .toast-wrap { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+    .toast { background: var(--text); color: #fff; font-size: 0.78rem; font-weight: 500; padding: 10px 16px; border-radius: 10px; box-shadow: var(--shadow); animation: slide-in 0.2s ease; max-width: 280px; }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+    @keyframes slide-in { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* DELETE MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 900; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08); padding: 2rem; width: 100%; max-width: 400px; margin: 1rem; transform: translateY(16px) scale(0.97); transition: transform 0.22s cubic-bezier(.4,0,.2,1); }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--danger-bg); display: flex; align-items: center; justify-content: center; margin-bottom: 1.1rem; }
+    .modal-icon svg { width: 24px; height: 24px; color: var(--danger); }
+    .modal-title { font-size: 1rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .modal-body { font-size: 0.82rem; color: var(--dim); line-height: 1.55; margin-bottom: 1.5rem; }
+    .modal-body strong { color: var(--text); font-weight: 600; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-footer .btn { min-width: 88px; justify-content: center; }
+
+    @media (max-width: 640px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .page { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="/main-app/home/" class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">NEXUS</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="/main-app/dashboard/">Dashboard</a>
+    <a href="/main-app/strategy/">Strategy</a>
+    <a href="/main-app/knowledge-base/" class="active">Knowledge Base</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="/main-app/profile/" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)">
+      <div id="nav-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">U</div>
+      <span id="nav-name" style="font-size:0.78rem;font-weight:600"></span>
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Knowledge Base</div>
+      <div class="page-sub">Upload and index documents once — select them in any pipeline run</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Documents</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-note">in your library</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Indexed</div>
+      <div class="stat-value" id="stat-indexed" style="color:var(--success)">—</div>
+      <div class="stat-note">ready for pipeline</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Chunks</div>
+      <div class="stat-value" id="stat-chunks">—</div>
+      <div class="stat-note">vectors in Pinecone</div>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-card">
+    <div class="upload-title">Upload Document</div>
+    <div class="drop-zone" id="drop-zone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V8m0 0-3 3m3-3 3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/></svg>
+      <div class="drop-text">Drag & drop a file here or <span class="drop-link" id="browse-link">browse</span></div>
+      <div class="drop-sub">PDF, TXT, DOCX, MD — max 50 MB</div>
+      <input type="file" id="file-input" accept=".pdf,.txt,.docx,.md" />
+    </div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="upload-msg" id="upload-msg">Uploading…</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Document list -->
+  <div class="docs-card">
+    <div class="docs-header">
+      <span class="docs-title">Your Documents</span>
+      <span class="docs-count" id="docs-count">0 documents</span>
+    </div>
+    <div id="doc-list">
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <div class="empty-text">No documents yet — upload one above</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+    </div>
+    <div class="modal-title">Delete document?</div>
+    <div class="modal-body">
+      <strong id="modal-doc-name"></strong> will be permanently removed along with all its vectors from Pinecone. This cannot be undone.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm" style="background:var(--danger);color:#fff;border:none;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API   = '/main-app/api/knowledge-base/';
+  const token = localStorage.getItem('access_token') || localStorage.getItem('access') || '';
+  const csrf  = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+
+  // Load user into topbar
+  (async () => {
+    try {
+      const res  = await fetch('/auth-api/user_profile/', { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('nav-avatar').textContent = json.data.initials || 'U';
+        document.getElementById('nav-name').textContent   = json.data.full_name || '';
+      }
+    } catch (_) {}
+  })();
+
+  // ── Auth headers ────────────────────────────────────────────────────────────
+  function headers(extra = {}) {
+    const h = { 'X-CSRFToken': csrf, ...extra };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function toast(msg, type = '') {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    document.getElementById('toast-wrap').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Load documents ──────────────────────────────────────────────────────────
+  let kbPage = 1;
+  let kbAllDocs = [];
+
+  async function loadDocs(page = 1, append = false) {
+    try {
+      const res  = await fetch(`${API}?page=${page}&page_size=10`, { headers: headers() });
+      const json = await res.json();
+      const docs     = json.results || [];
+      const total    = json.count   || 0;
+      const has_more = !!json.next;
+      kbPage = page;
+
+      if (append) {
+        kbAllDocs = [...kbAllDocs, ...docs];
+      } else {
+        kbAllDocs = docs;
+      }
+
+      renderDocs(kbAllDocs, total, has_more);
+      updateStats(kbAllDocs, total);
+    } catch (e) {
+      toast('Failed to load documents', 'error');
+    }
+  }
+
+  function ext(name) {
+    return name.includes('.') ? name.split('.').pop().toLowerCase() : 'file';
+  }
+
+  function iconClass(name) {
+    const e = ext(name);
+    if (e === 'pdf')  return 'pdf';
+    if (e === 'txt')  return 'txt';
+    if (e === 'docx') return 'docx';
+    if (e === 'md')   return 'md';
+    return 'txt';
+  }
+
+  function iconLabel(name) {
+    return ext(name).toUpperCase();
+  }
+
+  function badgeClass(status) {
+    return { indexed: 'badge-indexed', indexing: 'badge-indexing', pending: 'badge-pending', failed: 'badge-failed' }[status] || 'badge-pending';
+  }
+
+  function renderDocs(docs, total, has_more) {
+    const list = document.getElementById('doc-list');
+    document.getElementById('docs-count').textContent = `${total} document${total !== 1 ? 's' : ''}`;
+
+    const existingMore = document.getElementById('kb-load-more');
+    if (existingMore) existingMore.remove();
+
+    if (!docs.length) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No documents yet — upload one above</div></div>`;
+      return;
+    }
+
+    list.innerHTML = docs.map(d => `
+      <div class="doc-row" id="row-${d.id}">
+        <div class="doc-icon ${iconClass(d.name)}">${iconLabel(d.name)}</div>
+        <div class="doc-info">
+          <div class="doc-name" title="${d.name}">${d.name}</div>
+          <div class="doc-meta">${new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}${d.error ? ` · ${d.error}` : ''}</div>
+        </div>
+        <div class="doc-chunks">${d.chunk_count > 0 ? d.chunk_count + ' chunks' : ''}</div>
+        <span class="doc-badge ${badgeClass(d.status)}">${d.status}</span>
+        <div class="doc-actions">
+          <button class="btn btn-ghost btn-sm btn-danger" onclick="deleteDoc('${d.id}', '${d.name.replace(/'/g,"\\'")}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+
+    if (has_more) {
+      const btn = document.createElement('div');
+      btn.id = 'kb-load-more';
+      btn.style.cssText = 'text-align:center;padding:16px;';
+      btn.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="loadDocs(${kbPage + 1}, true)">Load More</button>`;
+      list.after(btn);
+    }
+  }
+
+  function updateStats(docs, total) {
+    const indexed = docs.filter(d => d.status === 'indexed');
+    const chunks  = indexed.reduce((s, d) => s + (d.chunk_count || 0), 0);
+    document.getElementById('stat-total').textContent   = total || docs.length;
+    document.getElementById('stat-indexed').textContent = indexed.length;
+    document.getElementById('stat-chunks').textContent  = chunks.toLocaleString();
+  }
+
+  // ── Delete Modal ────────────────────────────────────────────────────────────
+  let _pendingDeleteId   = null;
+  let _pendingDeleteName = null;
+
+  const modalOverlay = document.getElementById('delete-modal');
+  const modalName    = document.getElementById('modal-doc-name');
+  const modalConfirm = document.getElementById('modal-confirm');
+  const modalCancel  = document.getElementById('modal-cancel');
+
+  function openDeleteModal(id, name) {
+    _pendingDeleteId   = id;
+    _pendingDeleteName = name;
+    modalName.textContent = name;
+    modalOverlay.classList.add('open');
+    modalConfirm.disabled = false;
+    modalConfirm.textContent = 'Delete';
+  }
+
+  function closeDeleteModal() {
+    modalOverlay.classList.remove('open');
+    _pendingDeleteId = _pendingDeleteName = null;
+  }
+
+  modalCancel.addEventListener('click', closeDeleteModal);
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeDeleteModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteModal(); });
+
+  modalConfirm.addEventListener('click', async () => {
+    if (!_pendingDeleteId) return;
+    modalConfirm.disabled = true;
+    modalConfirm.textContent = 'Deleting…';
+    try {
+      const res = await fetch(`${API}${_pendingDeleteId}/`, { method: 'DELETE', headers: headers() });
+      if (res.ok) {
+        toast('Document deleted', 'success');
+        closeDeleteModal();
+        kbPage = 1; kbAllDocs = [];
+        loadDocs();
+      } else {
+        toast('Delete failed', 'error');
+        modalConfirm.disabled = false;
+        modalConfirm.textContent = 'Delete';
+      }
+    } catch (e) {
+      toast('Delete failed', 'error');
+      modalConfirm.disabled = false;
+      modalConfirm.textContent = 'Delete';
+    }
+  });
+
+  function deleteDoc(id, name) {
+    openDeleteModal(id, name);
+  }
+
+  // ── Upload ──────────────────────────────────────────────────────────────────
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const progress  = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const uploadMsg = document.getElementById('upload-msg');
+
+  document.getElementById('browse-link').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) uploadFile(fileInput.files[0]); });
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+  });
+
+  async function uploadFile(file) {
+    const maxMB = 50;
+    if (file.size > maxMB * 1024 * 1024) { toast(`File exceeds ${maxMB} MB`, 'error'); return; }
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    progress.style.display = 'block';
+    progressBar.style.width = '0%';
+    uploadMsg.textContent = `Uploading ${file.name}…`;
+
+    // Fake progress while uploading
+    let pct = 0;
+    const tick = setInterval(() => { pct = Math.min(pct + 8, 85); progressBar.style.width = pct + '%'; }, 200);
+
+    try {
+      const res  = await fetch(API, { method: 'POST', headers: headers(), body: fd });
+      const json = await res.json();
+      clearInterval(tick);
+
+      if (res.ok) {
+        progressBar.style.width = '100%';
+        uploadMsg.textContent = 'Uploaded — indexing in background…';
+        toast(`${file.name} uploaded — indexing started`, 'success');
+        fileInput.value = '';
+        setTimeout(() => { progress.style.display = 'none'; loadDocs(); }, 1500);
+        // Poll for indexing completion
+        pollStatus(json.data.id);
+      } else {
+        progressBar.style.width = '100%';
+        progressBar.style.background = 'var(--danger)';
+        uploadMsg.textContent = json.message || 'Upload failed';
+        toast(json.message || 'Upload failed', 'error');
+      }
+    } catch (e) {
+      clearInterval(tick);
+      uploadMsg.textContent = 'Upload failed — check your connection';
+      toast('Upload failed', 'error');
+    }
+  }
+
+  // ── Poll indexing status ────────────────────────────────────────────────────
+  function pollStatus(docId) {
+    const MAX = 60; let tries = 0;
+    const iv = setInterval(async () => {
+      tries++;
+      if (tries > MAX) { clearInterval(iv); return; }
+      try {
+        const res  = await fetch(API, { headers: headers() });
+        const json = await res.json();
+        const doc  = (json.results || []).find(d => d.id === docId);
+        if (!doc) { clearInterval(iv); return; }
+        if (doc.status === 'indexed') {
+          clearInterval(iv);
+          toast(`Indexing complete — ${doc.chunk_count} chunks ready`, 'success');
+          loadDocs();
+        } else if (doc.status === 'failed') {
+          clearInterval(iv);
+          toast(`Indexing failed: ${doc.error}`, 'error');
+          loadDocs();
+        } else {
+          loadDocs(); // refresh badge
+        }
+      } catch {}
+    }, 3000);
+  }
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  loadDocs();
+</script>
+</body>
+</html>

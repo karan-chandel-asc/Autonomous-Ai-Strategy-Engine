@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f7;
+      --bg3: #fafafa;
+      --border: rgba(0,0,0,0.09);
+      --border2: rgba(0,0,0,0.16);
+      --accent: #0071e3;
+      --accent-d: rgba(0,113,227,0.07);
+      --text: #1d1d1f;
+      --dim: #6e6e73;
+      --muted: #aeaeb2;
+      --success: #1a7f4b;
+      --success-bg: rgba(26,127,75,0.07);
+      --danger: #c0392b;
+      --danger-bg: rgba(192,57,43,0.07);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg2);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* SPLIT LAYOUT */
+    .auth-left {
+      width: 55%; min-height: 100vh;
+      background: var(--text);
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 4rem;
+      position: relative; overflow: hidden;
+    }
+    .auth-right {
+      width: 45%; min-height: 100vh;
+      background: #fff;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 3rem 3.5rem;
+    }
+
+    /* LEFT PANEL */
+    .left-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3.5rem; }
+    .logo-mark { width: 34px; height: 34px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; color: var(--text); }
+    .logo-name { font-size: 1.1rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+    .left-h1 { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 800; color: #fff; letter-spacing: -0.045em; line-height: 1.05; margin-bottom: 1.2rem; }
+    .left-h1 span { color: #60a5fa; }
+    .left-p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.8; max-width: 420px; margin-bottom: 2.5rem; }
+
+    /* FEATURE LIST */
+    .feature-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 3rem; }
+    .feature-item { display: flex; align-items: flex-start; gap: 12px; }
+    .feat-ico { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .feat-text { font-size: 0.83rem; color: rgba(255,255,255,0.75); line-height: 1.5; }
+    .feat-text strong { color: #fff; display: block; margin-bottom: 1px; }
+
+    /* TERMINAL PREVIEW */
+    .terminal-preview {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 1.2rem 1.4rem;
+      font-family: 'Fira Code', monospace; font-size: 0.68rem; line-height: 1.9;
+      color: rgba(255,255,255,0.5);
+    }
+    .tp-bar { display: flex; gap: 5px; margin-bottom: 1rem; }
+    .tp-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .t-blue { color: #60a5fa; } .t-green { color: #4ade80; }
+    .t-gold { color: #fbbf24; } .t-white { color: rgba(255,255,255,0.9); }
+
+    /* STATS ROW */
+    .left-stats { display: flex; gap: 2rem; }
+    .left-stat-val { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.04em; }
+    .left-stat-lbl { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+    /* RIGHT PANEL */
+    .auth-form-wrap { width: 100%; max-width: 360px; }
+    .auth-eyebrow { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+    .auth-eyebrow::before, .auth-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* TAB SWITCHER */
+    .tab-switcher {
+      display: flex; background: var(--bg2); border-radius: 9px; padding: 3px;
+      margin-bottom: 2rem; border: 1px solid var(--border);
+    }
+    .tab-sw-btn {
+      flex: 1; padding: 8px; border-radius: 7px; border: none; background: none;
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; color: var(--muted); transition: all 0.15s;
+    }
+    .tab-sw-btn.active { background: #fff; color: var(--text); box-shadow: var(--shadow-sm); }
+
+    /* FORM */
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { font-size: 0.75rem; font-weight: 600; color: var(--dim); display: block; margin-bottom: 6px; }
+    .form-input {
+      width: 100%; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: var(--text);
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 11px 13px; outline: none; transition: border-color 0.15s, background 0.15s;
+    }
+    .form-input:focus { border-color: var(--accent); background: #fff; }
+    .form-input::placeholder { color: var(--muted); }
+
+    /* REMEMBER */
+    .remember-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1.4rem; }
+    .remember-box { position: relative; }
+    .remember-box input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .remember-custom {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1.5px solid var(--border2); background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .remember-box input:checked + .remember-custom { background: var(--accent); border-color: var(--accent); }
+    .remember-box input:checked + .remember-custom::after { content: '✓'; color: #fff; font-size: 0.65rem; font-weight: 700; }
+    .remember-label { font-size: 0.78rem; color: var(--dim); cursor: pointer; }
+    .forgot-link { margin-left: auto; font-size: 0.75rem; color: var(--accent); text-decoration: none; }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* SUBMIT BTN */
+    .submit-btn {
+      width: 100%; padding: 12px; border-radius: 9px; border: none;
+      background: var(--text); color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s; letter-spacing: -0.02em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 1.2rem;
+    }
+    .submit-btn:hover { background: #3a3a3f; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* DIVIDER */
+    .or-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 1.2rem; }
+    .or-line { flex: 1; height: 1px; background: var(--border); }
+    .or-text { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+    /* OAUTH */
+    .oauth-btns { display: flex; gap: 8px; margin-bottom: 1.4rem; }
+    .oauth-btn {
+      flex: 1; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; color: var(--dim); transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+    .oauth-btn:hover { border-color: var(--border2); color: var(--text); background: var(--bg2); }
+    .oauth-ico { font-size: 0.9rem; }
+
+    /* ALERT */
+    .alert { padding: 10px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem; display: none; align-items: center; gap: 8px; }
+    .alert.active { display: flex; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(192,57,43,0.15); }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(26,127,75,0.15); }
+
+    /* FOOTER */
+    .auth-footer { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 1.5rem; line-height: 1.8; }
+    .auth-footer a { color: var(--accent); text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* RIGHT TOP LINK */
+    .right-top { position: absolute; top: 1.4rem; right: 2rem; }
+    .back-home { font-size: 0.75rem; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.15s; }
+    .back-home:hover { color: var(--text); }
+
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      .auth-left { width: 100%; min-height: 50vh; padding: 3rem 2rem; }
+      .auth-right { width: 100%; padding: 3rem 2rem; }
+      .terminal-preview { display: none; }
+    }
+
+    /* EYE TOGGLE */
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-input { padding-right: 38px; }
+    .pw-eye { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; line-height: 1; padding: 0; }
+    .pw-eye:hover { color: var(--dim); }
+
+    /* TOASTER */
+    .toast-container { position: fixed; top: 1.2rem; right: 1.2rem; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      min-width: 260px; max-width: 360px;
+      padding: 12px 16px; border-radius: 10px;
+      font-size: 0.82rem; font-weight: 500; line-height: 1.4;
+      display: flex; align-items: flex-start; gap: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      animation: toast-in 0.2s ease;
+    }
+    .toast.toast-error  { background: #fff1f0; color: #c0392b; border: 1px solid rgba(192,57,43,0.2); }
+    .toast.toast-success{ background: #f0fdf4; color: #1a7f4b; border: 1px solid rgba(26,127,75,0.2); }
+    @keyframes toast-in { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toast-container"></div>
+
+<!-- LEFT PANEL -->
+<div class="auth-left">
+  <div class="left-logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </div>
+
+  <h1 class="left-h1">Strategy intelligence,<br/><span>automatically.</span></h1>
+  <p class="left-p">Upload your documents, set your objective, and get a complete strategic brief from 7 parallel AI agents — in under 30 seconds.</p>
+
+  <div class="feature-list">
+    <div class="feature-item">
+      <div class="feat-ico">⚡</div>
+      <div class="feat-text"><strong>7 Parallel Analysis Chains</strong>LangChain LCEL RunnableParallel — all 7 agents run simultaneously for maximum speed.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feat-ico">🧠</div>
+      <div class="feat-text"><strong>Document-Grounded Intelligence</strong>Pinecone vector store with RAG — every analysis is grounded in your actual documents.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feat-ico">✅</div>
+      <div class="feat-text"><strong>Structured JSON Output</strong>Pydantic v2-validated output for every chain — clean, parseable, API-ready.</div>
+    </div>
+  </div>
+
+  <div class="terminal-preview">
+    <div class="tp-bar">
+      <div class="tp-dot" style="background:#ef4444"></div>
+      <div class="tp-dot" style="background:#fbbf24"></div>
+      <div class="tp-dot" style="background:#4ade80"></div>
+    </div>
+    <span class="t-white">$ nexus analyze --objective "APAC expansion"</span><br/>
+    <span class="t-blue">→ embedding 4 documents into Pinecone</span><br/>
+    <span class="t-blue">→ launching RunnableParallel (7 chains)</span><br/>
+    <span class="t-gold">&nbsp;&nbsp;[1/7]</span> executive_summary … <span class="t-green">done (4.2s)</span><br/>
+    <span class="t-gold">&nbsp;&nbsp;[2/7]</span> market_analysis … <span class="t-green">done (5.8s)</span><br/>
+    <span class="t-gold">&nbsp;&nbsp;[7/7]</span> weakness_review … <span class="t-green">done (6.1s)</span><br/>
+    <span class="t-green">✓ aggregation complete — 18.4s total</span>
+  </div>
+
+  <div class="left-stats" style="margin-top:2rem">
+    <div><div class="left-stat-val">7×</div><div class="left-stat-lbl">Parallel Chains</div></div>
+    <div><div class="left-stat-val">&lt;30s</div><div class="left-stat-lbl">Full Report</div></div>
+    <div><div class="left-stat-val">100%</div><div class="left-stat-lbl">Structured JSON</div></div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="auth-right" style="position:relative">
+  <a href="/main-app/home/" class="back-home right-top">← Back to home</a>
+
+  <div class="auth-form-wrap">
+    <div class="auth-eyebrow">Nexus Platform</div>
+
+    <!-- ALERT -->
+    <div class="alert alert-error" id="alert-error">
+      <span>⚠</span><span id="alert-error-msg">Invalid credentials.</span>
+    </div>
+    <div class="alert alert-success" id="alert-success">
+      <span>✓</span><span id="alert-success-msg">Account created. Signing you in…</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-switcher">
+      <button class="tab-sw-btn active" id="tab-login-btn" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-sw-btn" id="tab-register-btn" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-panel active" id="panel-login">
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" id="login-email" class="form-input" placeholder="you@company.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="login-password" class="form-input" placeholder="Enter your password" autocomplete="current-password" />
+          <button type="button" class="pw-eye" onclick="togglePw('login-password', this)">👁</button>
+        </div>
+      </div>
+      <div class="remember-row">
+        <label class="remember-box">
+          <input type="checkbox" id="remember-me" />
+          <div class="remember-custom"></div>
+        </label>
+        <span class="remember-label" onclick="toggleRemember()">Keep me signed in for 30 days</span>
+        <a href="/auth-api/forgot_password/" class="forgot-link">Forgot password?</a>
+      </div>
+      <button class="submit-btn" onclick="handleLogin(event)">
+        <span>Sign In to Nexus</span>
+      </button>
+      <div class="or-divider"><div class="or-line"></div><span class="or-text">or continue with</span><div class="or-line"></div></div>
+      <div class="oauth-btns">
+        <a class="oauth-btn" href="/social/login/google-oauth2/"><span class="oauth-ico">G</span>Google</a>
+        <a class="oauth-btn" href="/social/login/github/"><span class="oauth-ico">⌥</span>GitHub</a>
+      </div>
+      <div class="auth-footer">
+        Don't have an account? <a href="#" onclick="switchTab('register');return false;">Create one free →</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-panel" id="panel-register">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input type="text" id="reg-name" class="form-input" placeholder="Jane Smith" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Work email</label>
+        <input type="email" id="reg-email" class="form-input" placeholder="jane@company.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="reg-password" class="form-input" placeholder="Minimum 8 characters" autocomplete="new-password" />
+          <button type="button" class="pw-eye" onclick="togglePw('reg-password', this)">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm password</label>
+        <div class="pw-wrap">
+          <input type="password" id="reg-confirm" class="form-input" placeholder="Repeat password" autocomplete="new-password" />
+          <button type="button" class="pw-eye" onclick="togglePw('reg-confirm', this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="handleRegister(event)" style="margin-top:0.5rem">
+        <span>Create Free Account</span>
+      </button>
+      <div class="or-divider"><div class="or-line"></div><span class="or-text">or continue with</span><div class="or-line"></div></div>
+      <div class="oauth-btns">
+        <a class="oauth-btn" href="/social/login/google-oauth2/"><span class="oauth-ico">G</span>Google</a>
+        <a class="oauth-btn" href="/social/login/github/"><span class="oauth-ico">⌥</span>GitHub</a>
+      </div>
+      <div class="auth-footer">
+        By creating an account you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br/>
+        Already have an account? <a href="#" onclick="switchTab('login');return false;">Sign in →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  }
+
+  function showToast(msg, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.innerHTML = (type === 'error' ? '⚠ ' : '✓ ') + msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-sw-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    document.getElementById('tab-' + tab + '-btn').classList.add('active');
+  }
+
+  function toggleRemember() {
+    const cb = document.getElementById('remember-me');
+    cb.checked = !cb.checked;
+  }
+
+  async function handleLogin(event) {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    const keep_signin = document.getElementById('remember-me').checked;
+    if (!email || !password) { showToast('Please enter your email and password.', 'error'); return; }
+
+    const btn = event.currentTarget;
+    btn.disabled = true; btn.innerHTML = '<span>Signing in…</span>';
+
+    try {
+      const res  = await fetch('/auth-api/user_login/', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password , keep_signin }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const storage = keep_signin ? localStorage : sessionStorage;
+        storage.setItem('access',  data.data.access);
+        storage.setItem('refresh', data.data.refresh);
+        showToast('Login successful!', 'success');
+        setTimeout(() => { window.location.href = '/main-app/dashboard/'; }, 800);
+      } else {
+        showToast(data.message || 'Login failed.', 'error');
+      }
+    } catch (err) {
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<span>Sign In to Nexus</span>';
+    }
+  }
+
+  async function handleRegister(event) {
+    const full_name        = document.getElementById('reg-name').value.trim();
+    const email            = document.getElementById('reg-email').value.trim();
+    const password         = document.getElementById('reg-password').value.trim();
+    const confirm_password = document.getElementById('reg-confirm').value.trim();
+
+    if (!full_name || !email || !password || !confirm_password) {
+      showToast('Please fill in all fields.', 'error'); return;
+    }
+
+    const btn = event.currentTarget;
+    btn.disabled = true; btn.innerHTML = '<span>Creating account…</span>';
+
+    try {
+      const res  = await fetch('/auth-api/user_signup/', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ full_name, email, password, confirm_password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Account created! Please sign in.', 'success');
+        setTimeout(() => switchTab('login'), 1200);
+      } else {
+        showToast(data.message || 'Registration failed.', 'error');
+      }
+    } catch (err) {
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '<span>Create Free Account</span>';
+    }
+  }
+
+  function handleOAuth(provider) {
+    window.location.href = `/api/auth/oauth/${provider}/`;
+  }
+</script>
+</body>
+</html>

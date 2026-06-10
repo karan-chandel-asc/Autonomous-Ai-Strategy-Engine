@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Build Strategy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f7;
+      --bg3: #fafafa;
+      --border: rgba(0,0,0,0.09);
+      --border2: rgba(0,0,0,0.16);
+      --accent: #0071e3;
+      --accent-d: rgba(0,113,227,0.07);
+      --text: #1d1d1f;
+      --dim: #6e6e73;
+      --muted: #aeaeb2;
+      --success: #1a7f4b;
+      --success-bg: rgba(26,127,75,0.07);
+      --warning: #92680a;
+      --warning-bg: rgba(146,104,10,0.07);
+      --danger: #c0392b;
+      --danger-bg: rgba(192,57,43,0.07);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg2);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* TOP BAR */
+    .topbar {
+      background: #fff; border-bottom: 1px solid var(--border);
+      height: 52px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; position: sticky; top: 0; z-index: 50;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 26px; height: 26px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #fff; }
+    .logo-name { font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em; }
+    .topbar-nav { display: flex; gap: 2px; }
+    .topbar-nav a { font-size: 0.78rem; font-weight: 500; color: var(--dim); text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+    .topbar-nav a:hover, .topbar-nav a.active { color: var(--text); background: var(--bg2); }
+    .topbar-right { display: flex; gap: 8px; align-items: center; }
+    .btn { font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 7px 16px; border-radius: 7px; cursor: pointer; text-decoration: none; border: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .btn-ghost { background: none; border: 1px solid var(--border2); color: var(--dim); }
+    .btn-ghost:hover { color: var(--text); background: var(--bg2); }
+    .btn-dark { background: var(--text); color: #fff; }
+    .btn-dark:hover { background: #3a3a3f; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #0058b8; }
+
+    /* PAGE */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+    .page-header { grid-column: 1 / -1; margin-bottom: 0.5rem; }
+    .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; }
+    .page-sub { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+    /* CARD */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 14px; }
+    .card:last-child { margin-bottom: 0; }
+    .card-header { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); }
+    .card-title { font-size: 0.88rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 7px; }
+    .card-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .card-body { padding: 1.4rem; }
+
+    /* STEP BADGE */
+    .step-badge { width: 20px; height: 20px; border-radius: 50%; background: var(--text); color: #fff; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* UPLOAD ZONE */
+    /* KB selector */
+    .kb-doc-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; border:1px solid var(--border); cursor:pointer; transition:all 0.15s; user-select:none; }
+    .kb-doc-item:hover { border-color:var(--accent); background:rgba(99,102,241,0.05); }
+    .kb-doc-item.selected { border-color:var(--accent); background:rgba(99,102,241,0.1); }
+    .kb-doc-item input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
+    .kb-doc-name { font-size:0.82rem; font-weight:600; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .kb-doc-meta { font-family:'Fira Code',monospace; font-size:0.65rem; color:var(--muted); white-space:nowrap; }
+    .kb-status-badge { font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em; flex-shrink:0; }
+    .kb-status-indexed  { background:rgba(34,197,94,0.12); color:#22c55e; }
+    .kb-status-indexing { background:rgba(234,179,8,0.12);  color:#eab308; }
+    .kb-status-pending  { background:rgba(148,163,184,0.12);color:var(--muted); }
+    .kb-status-failed   { background:rgba(239,68,68,0.12);  color:#ef4444; }
+    .kb-doc-ico { font-size:1rem; flex-shrink:0; }
+    .upload-zone {
+      border: 2px dashed var(--border2); border-radius: 10px;
+      padding: 2.5rem 1.5rem; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--bg3);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent); background: var(--accent-d);
+    }
+    .upload-ico { font-size: 2rem; margin-bottom: 0.7rem; opacity: 0.5; display: block; }
+    .upload-h { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+    .upload-p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+    .upload-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 1rem; font-size: 0.78rem; font-weight: 600; padding: 7px 16px; border-radius: 7px; background: var(--text); color: #fff; border: none; cursor: pointer; transition: background 0.15s; }
+    .upload-btn:hover { background: #3a3a3f; }
+    #file-input { display: none; }
+
+    /* FILE LIST */
+    #file-list { display: flex; flex-direction: column; gap: 6px; margin-top: 0.8rem; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    }
+    .file-ico { font-size: 1rem; flex-shrink: 0; }
+    .file-name { font-size: 0.78rem; font-weight: 600; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-size { font-family: 'Fira Code', monospace; font-size: 0.65rem; color: var(--muted); }
+    .file-remove { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; transition: all 0.15s; }
+    .file-remove:hover { background: var(--danger-bg); color: var(--danger); }
+
+    /* OBJECTIVE */
+    .objective-input {
+      width: 100%; min-height: 120px; resize: vertical;
+      font-family: 'Inter', sans-serif; font-size: 0.88rem; color: var(--text);
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 9px; padding: 12px 14px; line-height: 1.6;
+      transition: border-color 0.15s; outline: none;
+    }
+    .objective-input:focus { border-color: var(--accent); background: #fff; }
+    .objective-input::placeholder { color: var(--muted); }
+    .char-count { font-family: 'Fira Code', monospace; font-size: 0.65rem; color: var(--muted); text-align: right; margin-top: 5px; }
+
+    /* EXAMPLE PILLS */
+    .example-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .example-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .example-pill {
+      font-size: 0.72rem; font-weight: 500; padding: 5px 12px;
+      border-radius: 100px; background: #fff; border: 1px solid var(--border);
+      color: var(--dim); cursor: pointer; transition: all 0.15s;
+    }
+    .example-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-d); }
+
+    /* THREAD ID */
+    .thread-row { display: flex; gap: 8px; align-items: center; }
+    .thread-input {
+      flex: 1; font-family: 'Fira Code', monospace; font-size: 0.78rem;
+      color: var(--text); background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 7px; padding: 8px 12px; outline: none; transition: border-color 0.15s;
+    }
+    .thread-input:focus { border-color: var(--accent); background: #fff; }
+    .thread-hint { font-size: 0.7rem; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+
+    /* CHAIN STATUS */
+    .chain-list { display: flex; flex-direction: column; gap: 0; }
+    .chain-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.85rem 1.4rem; border-bottom: 1px solid var(--border);
+    }
+    .chain-row:last-child { border-bottom: none; }
+    .chain-ico { width: 30px; height: 30px; border-radius: 8px; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .chain-info { flex: 1; min-width: 0; }
+    .chain-name-row { display: flex; align-items: center; gap: 7px; }
+    .chain-name { font-size: 0.82rem; font-weight: 700; color: var(--text); white-space: nowrap; flex-shrink: 0; }
+    .chain-divider { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--border2) 0, var(--border2) 3px, transparent 3px, transparent 7px); }
+    .chain-desc { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .chain-tag { font-family: 'Fira Code', monospace; font-size: 0.58rem; color: var(--dim); background: var(--bg2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+    .cs-idle { width: 7px; height: 7px; border-radius: 50%; background: #e8e8ed; }
+    .cs-run { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+    /* GENERATE BUTTON */
+    .gen-area { margin-top: 0.5rem; }
+    .gen-btn {
+      width: 100%; padding: 14px; border-radius: 10px; border: none;
+      background: var(--text); color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; letter-spacing: -0.02em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .gen-btn:hover:not(:disabled) { background: #3a3a3f; }
+    .gen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .gen-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px; line-height: 1.5; }
+
+    /* SIDEBAR */
+    .side-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* PIPELINE PREVIEW */
+    .pipeline-flow { display: flex; flex-direction: column; gap: 4px; }
+    .pf-row { display: flex; align-items: center; gap: 6px; }
+    .pf-box { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 0.72rem; font-weight: 600; color: var(--text); }
+    .pf-box.ac { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pf-arrow { color: var(--muted); font-size: 0.75rem; text-align: center; }
+    .pf-parallel { background: #fff; border: 1px solid var(--border); border-left: 2px solid var(--accent); border-radius: 7px; padding: 8px 10px; }
+    .pf-par-lbl { font-family: 'Fira Code', monospace; font-size: 0.58rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+    .pf-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+    .pf-chip { font-size: 0.6rem; padding: 2px 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--dim); }
+
+    /* INFO CARD */
+    .info-row { display: flex; gap: 8px; padding: 0.75rem 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .info-row:last-child { border-bottom: none; }
+    .info-ico { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+    .info-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text); }
+    .info-val { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
+
+    /* INLINE PIPELINE LOG */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pipe-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Chain card progress bar */
+    #chain-progress-bar { display:none; margin-top:10px; height:3px; background:#e8e8ed; border-radius:2px; overflow:hidden; }
+    #chain-bar-fill { height:100%; background:var(--accent); width:0; transition:width 0.4s ease; border-radius:2px; }
+    .chain-pct { font-family:'Fira Code',monospace; font-size:0.68rem; font-weight:700; color:var(--accent); }
+
+    /* Pipeline events section */
+    #pipeline-log { display:none; padding:0.55rem 1.4rem 0.7rem; border-bottom:1px solid var(--border); display:none; flex-direction:column; gap:1px; }
+    .pipe-event { display:flex; align-items:flex-start; gap:8px; padding:5px 7px; border-radius:6px; animation:pipe-in 0.2s ease; }
+    .pipe-event.pe-active { background:rgba(0,113,227,0.05); }
+    .pe-left { width:15px; height:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    .pe-spinner { width:11px; height:11px; border:1.5px solid rgba(0,113,227,0.18); border-top-color:var(--accent); border-radius:50%; animation:spin 0.75s linear infinite; }
+    .pe-check { font-size:0.6rem; font-weight:800; color:var(--success); line-height:1; }
+    .pe-check-err { color:var(--danger); }
+    .pe-body { flex:1; min-width:0; }
+    .pe-row { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+    .pe-icon-sm { font-size:0.7rem; flex-shrink:0; }
+    .pe-label { font-size:0.72rem; font-weight:700; color:var(--text); flex-shrink:0; }
+    .pe-msg { font-size:0.64rem; color:var(--muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pe-arr { font-size:0.72rem; color:var(--dim); transition:transform 0.15s; flex-shrink:0; cursor:pointer; font-weight:600; }
+    .pe-detail { font-size:0.67rem; color:var(--dim); background:var(--bg2); border-radius:5px; padding:5px 9px; margin-top:4px; line-height:1.6; border-left:2px solid var(--border2); display:none; }
+
+    /* Chain row inline status states */
+    .cs-spinner { width:11px; height:11px; border:2px solid rgba(0,113,227,0.18); border-top-color:var(--accent); border-radius:50%; animation:spin 0.75s linear infinite; flex-shrink:0; }
+    .cs-done { font-family:'Fira Code',monospace; font-size:0.68rem; font-weight:700; color:var(--success); white-space:nowrap; }
+    .cs-err  { font-family:'Fira Code',monospace; font-size:0.68rem; font-weight:700; color:var(--danger); white-space:nowrap; }
+
+    /* Completion banner */
+    #completion-banner { display:none; padding:1rem 1.4rem; border-top:1px solid rgba(26,127,75,0.15); background:var(--success-bg); border-radius:0 0 13px 13px; }
+    .completion-inner { display:flex; align-items:center; gap:12px; }
+    .completion-icon { font-size:1.4rem; }
+    .completion-title { font-size:0.82rem; font-weight:700; color:var(--success); }
+    .completion-sub { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+
+    /* QUERY VALIDATION BANNER */
+    .qv-banner {
+      display: none; margin-bottom: 1rem;
+      background: rgba(146,104,10,0.06); border: 1px solid rgba(146,104,10,0.2);
+      border-left: 3px solid var(--warning); border-radius: 9px;
+      padding: 12px 14px; animation: qv-in 0.2s ease;
+    }
+    .qv-banner.show { display: flex; align-items: flex-start; gap: 10px; }
+    @keyframes qv-in { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+    .qv-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .qv-body { flex: 1; min-width: 0; }
+    .qv-title { font-size: 0.75rem; font-weight: 700; color: var(--warning); margin-bottom: 3px; letter-spacing: -0.01em; }
+    .qv-msg   { font-size: 0.78rem; color: var(--text); line-height: 1.55; }
+    .qv-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+    .qv-close:hover { color: var(--text); }
+
+    @media (max-width: 1024px) { .page { grid-template-columns: 1fr; } .page-header { grid-column: 1; } }
+    @media (max-width: 640px) { .page { padding: 1.5rem 1rem; } .topbar-nav { display: none; } }
+
+    /* TOAST */
+    #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.12); pointer-events: auto; animation: toast-in 0.2s ease; max-width: 320px; }
+    .toast.success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(26,127,75,0.2); }
+    .toast.error   { background: var(--danger-bg);  color: var(--danger);  border: 1px solid rgba(192,57,43,0.2); }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--danger); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="topbar">
+  <a href="/main-app/home/" class="logo">
+    <div class="logo-mark">NX</div>
+    <span class="logo-name">Nexus</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="/main-app/dashboard/">Dashboard</a>
+    <a href="/main-app/strategy/" class="active">New Strategy</a>
+    <a href="/main-app/report/">Reports</a>
+    <a href="/main-app/knowledge-base/">Knowledge Base</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="/main-app/profile/" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);margin-right:4px">
+      <div id="nav-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">U</div>
+      <span id="nav-name" style="font-size:0.78rem;font-weight:600"></span>
+    </a>
+    <a href="/main-app/dashboard/" class="btn btn-ghost">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">Build Strategy</div>
+    <div class="page-sub">Select indexed documents, define your objective, and launch 7 parallel AI chains</div>
+  </div>
+
+  <!-- MAIN COLUMN -->
+  <div>
+    <!-- STEP 1: DOCUMENTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="step-badge">1</span> Select Knowledge Base Documents</div>
+        <div class="card-sub">Choose pre-indexed documents to provide context. <a href="/main-app/knowledge-base/" style="color:var(--accent);text-decoration:none;font-weight:600;">Upload docs →</a></div>
+      </div>
+      <div class="card-body">
+        <div id="kb-loading" style="padding:18px;text-align:center;color:var(--muted);font-size:0.82rem;">Loading your Knowledge Base…</div>
+        <div id="kb-empty" style="display:none;padding:20px;text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;opacity:0.4;">📂</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--text);margin-bottom:4px;">No indexed documents yet</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Upload and index documents in the Knowledge Base first.</div>
+          <a href="/main-app/knowledge-base/" class="btn btn-ghost" style="font-size:0.78rem;">Go to Knowledge Base →</a>
+        </div>
+        <div id="kb-doc-list" style="display:none;display:flex;flex-direction:column;gap:6px;"></div>
+        <div id="kb-selected-count" style="display:none;margin-top:10px;font-size:0.75rem;color:var(--muted);font-family:'Fira Code',monospace;"></div>
+        <div id="kb-optional-hint" style="display:none;margin-top:8px;font-size:0.73rem;color:var(--dim);font-style:italic;">Documents are optional — pipeline runs on objective alone if none selected.</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: OBJECTIVE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="step-badge">2</span> Define Strategic Objective</div>
+        <div class="card-sub">What strategic question do you need answered? Be specific — this guides all 7 analysis chains</div>
+      </div>
+      <div class="card-body">
+        <textarea id="objective-input" class="objective-input" placeholder="e.g. Analyze our competitive position in the B2B SaaS market for healthcare workflow automation and identify top 3 monetization strategies for a product-led growth model..." maxlength="2000"></textarea>
+        <div class="char-count"><span id="char-count">0</span> / 2000</div>
+        <!-- Validation banner — shown when query is a greeting or off-topic -->
+        <div class="qv-banner" id="qv-banner">
+          <span class="qv-icon">💡</span>
+          <div class="qv-body">
+            <div class="qv-title">Not a strategy query</div>
+            <div class="qv-msg" id="qv-msg"></div>
+          </div>
+          <button class="qv-close" onclick="hideQueryValidation()" title="Dismiss">✕</button>
+        </div>
+
+        <div style="margin-top: 1.2rem;">
+          <div class="example-label">Quick examples</div>
+          <div class="example-pills">
+            <span class="example-pill" onclick="setObjective('Market expansion strategy into APAC region for our SaaS platform')">APAC Expansion</span>
+            <span class="example-pill" onclick="setObjective('Competitive landscape analysis for fintech lending market — identify gaps and differentiation opportunities')">Fintech Competitive</span>
+            <span class="example-pill" onclick="setObjective('Go-to-market strategy for an AI infrastructure product targeting mid-market enterprises')">AI GTM Strategy</span>
+            <span class="example-pill" onclick="setObjective('Monetization strategy and pricing analysis for an open source developer tool')">OSS Monetization</span>
+            <span class="example-pill" onclick="setObjective('Risk assessment and mitigation plan for pivoting from B2C to B2B model')">B2C→B2B Pivot Risk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: THREAD ID -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="step-badge">3</span> Session Thread ID</div>
+        <div class="card-sub">Unique identifier for this analysis run — scopes agent outputs and final report</div>
+      </div>
+      <div class="card-body">
+        <div class="thread-row">
+          <input type="text" id="thread-id" class="thread-input" disabled placeholder="thr_xxxxxxxx" />
+          <button class="btn btn-ghost" onclick="generateThreadId()">Generate</button>
+          <button class="btn btn-ghost" onclick="copyThreadId()">Copy</button>
+        </div>
+        <div class="thread-hint">Auto-generated IDs are UUID-based</div>
+      </div>
+    </div>
+
+    <!-- CHAIN STATUS -->
+    <div class="card" id="chain-card">
+      <div class="card-header">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div class="card-title">Analysis Modules — 7 Parallel Chains</div>
+            <div class="card-sub" id="chain-card-sub">All chains run simultaneously via RunnableParallel. Status updates in real time after launch.</div>
+          </div>
+          <span class="chain-pct" id="chain-pct" style="display:none">0%</span>
+        </div>
+        <div id="chain-progress-bar"><div id="chain-bar-fill"></div></div>
+      </div>
+
+      <!-- Pipeline step events — shown while running -->
+      <div id="pipeline-log"></div>
+
+      <div class="chain-list" id="chain-list">
+        <div class="chain-row" id="chain-executive_summary">
+          <div class="chain-ico">📊</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Executive Summary</span>
+              <span class="chain-divider"></span>
+              <div id="cs-executive_summary"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">High-level strategic overview and key findings</div>
+          </div>
+          <span class="chain-tag">executive_summary</span>
+        </div>
+        <div class="chain-row" id="chain-market_analysis">
+          <div class="chain-ico">📈</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Market Analysis</span>
+              <span class="chain-divider"></span>
+              <div id="cs-market_analysis"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Market sizing, trends, and opportunity assessment</div>
+          </div>
+          <span class="chain-tag">market_analysis</span>
+        </div>
+        <div class="chain-row" id="chain-competitive_landscape">
+          <div class="chain-ico">⚔️</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Competitive Landscape</span>
+              <span class="chain-divider"></span>
+              <div id="cs-competitive_landscape"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Competitor analysis and positioning</div>
+          </div>
+          <span class="chain-tag">competitive_landscape</span>
+        </div>
+        <div class="chain-row" id="chain-monetization_strategy">
+          <div class="chain-ico">💰</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Monetization Strategy</span>
+              <span class="chain-divider"></span>
+              <div id="cs-monetization_strategy"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Revenue models, pricing, and GTM</div>
+          </div>
+          <span class="chain-tag">monetization_strategy</span>
+        </div>
+        <div class="chain-row" id="chain-risk_assessment">
+          <div class="chain-ico">🛡️</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Risk Assessment</span>
+              <span class="chain-divider"></span>
+              <div id="cs-risk_assessment"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Threat identification and mitigation planning</div>
+          </div>
+          <span class="chain-tag">risk_assessment</span>
+        </div>
+        <div class="chain-row" id="chain-roadmap">
+          <div class="chain-ico">🗺️</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Product Roadmap</span>
+              <span class="chain-divider"></span>
+              <div id="cs-roadmap"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Phased execution plan with milestones</div>
+          </div>
+          <span class="chain-tag">roadmap</span>
+        </div>
+        <div class="chain-row" id="chain-weakness_review">
+          <div class="chain-ico">🔍</div>
+          <div class="chain-info">
+            <div class="chain-name-row">
+              <span class="chain-name">Weakness Review</span>
+              <span class="chain-divider"></span>
+              <div id="cs-weakness_review"><div class="cs-idle"></div></div>
+            </div>
+            <div class="chain-desc">Gap analysis and strategic blind spots</div>
+          </div>
+          <span class="chain-tag">weakness_review</span>
+        </div>
+      </div>
+
+      <!-- Completion banner — shown after all done -->
+      <div id="completion-banner">
+        <div class="completion-inner">
+          <span class="completion-icon">✅</span>
+          <div>
+            <div class="completion-title">Strategy Analysis Complete</div>
+            <div class="completion-sub" id="completion-sub">Redirecting to your report in 2 seconds…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERATE -->
+    <div class="gen-area">
+      <button class="gen-btn" id="gen-btn" onclick="startGeneration()">
+        <span>Launch 7 Analysis Chains</span>
+      </button>
+      <div class="gen-note">Sends your objective + selected document context to the backend API.<br/>All 7 chains run in parallel — typical runtime is 15–30 seconds.</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="side-col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Pipeline Architecture</div></div>
+      <div class="card-body">
+        <div class="pipeline-flow">
+          <div class="pf-row"><div class="pf-box ac">KB Doc Selection</div></div>
+          <div class="pf-arrow">↓</div>
+          <div class="pf-row"><div class="pf-box ac">Pinecone Hybrid RAG</div></div>
+          <div class="pf-arrow">↓</div>
+          <div class="pf-row"><div class="pf-box ac">Per-Agent Context</div></div>
+          <div class="pf-arrow">↓</div>
+          <div class="pf-parallel">
+            <div class="pf-par-lbl">RunnableParallel</div>
+            <div class="pf-chips">
+              <span class="pf-chip">exec summary</span>
+              <span class="pf-chip">market</span>
+              <span class="pf-chip">competitive</span>
+              <span class="pf-chip">monetize</span>
+              <span class="pf-chip">risk</span>
+              <span class="pf-chip">roadmap</span>
+              <span class="pf-chip">weakness</span>
+            </div>
+          </div>
+          <div class="pf-arrow">↓</div>
+          <div class="pf-row"><div class="pf-box ac">Aggregation Chain</div></div>
+          <div class="pf-arrow">↓</div>
+          <div class="pf-row"><div class="pf-box" style="background:var(--success-bg);border-color:rgba(26,127,75,0.2);color:var(--success);font-weight:700">Strategy Brief (JSON)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Session Info</div></div>
+      <div class="card-body" style="padding-top:0.2rem">
+        <div class="info-row">
+          <div class="info-ico">🧠</div>
+          <div><div class="info-lbl">RAG Memory</div><div class="info-val">Thread-scoped Pinecone — your docs are isolated per session</div></div>
+        </div>
+        <div class="info-row">
+          <div class="info-ico">⚡</div>
+          <div><div class="info-lbl">Parallel Execution</div><div class="info-val">All 7 chains fire simultaneously via LCEL RunnableParallel</div></div>
+        </div>
+        <div class="info-row">
+          <div class="info-ico">✅</div>
+          <div><div class="info-lbl">Structured Output</div><div class="info-val">Pydantic v2 validates every chain's JSON before aggregation</div></div>
+        </div>
+        <div class="info-row">
+          <div class="info-ico">🔒</div>
+          <div><div class="info-lbl">Secure & Isolated</div><div class="info-val">Each session has its own thread ID and vector namespace</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Tips</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:0.78rem;color:var(--dim);line-height:1.6;padding:10px;background:var(--bg2);border-radius:7px;">📎 Upload your pitch deck, market research, or business plan — the more context, the sharper the output.</div>
+          <div style="font-size:0.78rem;color:var(--dim);line-height:1.6;padding:10px;background:var(--bg2);border-radius:7px;">🎯 Be specific in your objective — "SaaS B2B healthcare GTM" outperforms "marketing strategy".</div>
+          <div style="font-size:0.78rem;color:var(--dim);line-height:1.6;padding:10px;background:var(--bg2);border-radius:7px;">🧵 Save your Thread ID to reload or continue this session later.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Load user into topbar
+  (async () => {
+    const t = localStorage.getItem('access_token') || localStorage.getItem('access') || '';
+    try {
+      const res  = await fetch('/auth-api/user_profile/', { headers: { Authorization: `Bearer ${t}` } });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('nav-avatar').textContent = json.data.initials || 'U';
+        document.getElementById('nav-name').textContent   = json.data.full_name || '';
+      }
+    } catch (_) {}
+  })();
+
+  /* ── KB Document Selector ── */
+  let selectedDocIds = new Set();
+  let kbPage = 1;
+  const KB_PAGE_SIZE = 10;
+  let kbHasMore = false;
+
+  function renderKbDoc(doc) {
+    const item = document.createElement('div');
+    item.className = 'kb-doc-item';
+    item.id = 'kb-item-' + doc.id;
+    const icon = doc.name.endsWith('.pdf') ? '📄' : doc.name.endsWith('.docx') ? '📝' : doc.name.endsWith('.md') ? '📋' : '📃';
+    const chunks = doc.chunk_count ? `${doc.chunk_count} chunks` : '';
+    item.innerHTML = `
+      <input type="checkbox" id="cb-${doc.id}" onchange="toggleDoc('${doc.id}', this.checked)" />
+      <span class="kb-doc-ico">${icon}</span>
+      <span class="kb-doc-name" title="${doc.name}">${doc.name}</span>
+      ${chunks ? `<span class="kb-doc-meta">${chunks}</span>` : ''}
+      <span class="kb-status-badge kb-status-indexed">indexed</span>`;
+    item.onclick = (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      const cb = document.getElementById('cb-' + doc.id);
+      cb.checked = !cb.checked;
+      toggleDoc(doc.id, cb.checked);
+    };
+    return item;
+  }
+
+  async function loadKbDocs(page = 1) {
+    const loadMoreBtn = document.getElementById('kb-load-more');
+    if (loadMoreBtn) { loadMoreBtn.disabled = true; loadMoreBtn.textContent = 'Loading…'; }
+    try {
+      const r = await fetch(`/main-app/api/knowledge-base-for-strategy/?page=${page}&page_size=${KB_PAGE_SIZE}`, {
+        credentials: 'same-origin',
+      });
+      const res = await r.json();
+      document.getElementById('kb-loading').style.display = 'none';
+      const docs      = res.results || [];
+      const total     = res.count   || 0;
+      const has_more  = !!res.next;
+      kbPage    = page;
+      kbHasMore = has_more;
+
+      if (!docs.length && page === 1) {
+        document.getElementById('kb-empty').style.display = 'block';
+        return;
+      }
+
+      const list = document.getElementById('kb-doc-list');
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '6px';
+      docs.forEach(doc => list.appendChild(renderKbDoc(doc)));
+
+      document.getElementById('kb-optional-hint').style.display = 'block';
+
+      // Load More button
+      let btn = document.getElementById('kb-load-more');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'kb-load-more';
+        btn.style.cssText = 'margin-top:8px;width:100%;padding:8px;border:1px solid var(--border2);border-radius:8px;background:none;font-size:0.75rem;font-weight:600;color:var(--dim);cursor:pointer;font-family:Inter,sans-serif;';
+        btn.onclick = () => loadKbDocs(kbPage + 1);
+        list.after(btn);
+      }
+      if (has_more) {
+        btn.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = `Load More (${total - page * KB_PAGE_SIZE} more)`;
+      } else {
+        btn.style.display = 'none';
+      }
+
+      updateSelectedCount();
+    } catch {
+      document.getElementById('kb-loading').textContent = 'Failed to load documents.';
+    }
+  }
+
+  function toggleDoc(id, checked) {
+    const item = document.getElementById('kb-item-' + id);
+    if (checked) { selectedDocIds.add(id); item.classList.add('selected'); }
+    else { selectedDocIds.delete(id); item.classList.remove('selected'); }
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const el = document.getElementById('kb-selected-count');
+    if (selectedDocIds.size > 0) {
+      el.style.display = 'block';
+      el.textContent = selectedDocIds.size + ' document' + (selectedDocIds.size > 1 ? 's' : '') + ' selected for context';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  loadKbDocs();
+
+  /* ── Objective ── */
+  const objInput = document.getElementById('objective-input');
+  objInput.addEventListener('input', () => {
+    document.getElementById('char-count').textContent = objInput.value.length;
+    hideQueryValidation();
+  });
+  function setObjective(text) { objInput.value = text; document.getElementById('char-count').textContent = text.length; hideQueryValidation(); objInput.focus(); }
+
+  /* ── Query validation banner ── */
+  function showQueryValidation(msg) {
+    document.getElementById('qv-msg').textContent = msg;
+    const b = document.getElementById('qv-banner');
+    b.classList.remove('show');
+    void b.offsetWidth; // reflow to re-trigger animation
+    b.classList.add('show');
+    b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function hideQueryValidation() {
+    document.getElementById('qv-banner').classList.remove('show');
+  }
+
+  async function validateQuery(query) {
+    try {
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+      const token = localStorage.getItem('access_token');
+      const headers = { 'Content-Type': 'application/json', 'X-CSRFToken': csrf };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch('/main-app/api/validate-query/', {
+        method: 'POST', credentials: 'same-origin',
+        headers, body: JSON.stringify({ input_query: query }),
+      });
+      if (!res.ok) return { valid: true };
+      const json = await res.json();
+      return json.data || { valid: true };
+    } catch {
+      return { valid: true };
+    }
+  }
+
+  /* ── Toast ── */
+  function showToast(message, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-dot"></span>${message}`;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ── Thread ID ── */
+  async function generateThreadId() {
+    if (document.getElementById('thread-id').value.trim()) { showToast('Thread ID already set', 'error'); return; }
+    try {
+      const r = await fetch('/main-app/generate-thread-id/', { method: 'GET', credentials: 'same-origin' });
+      const res = await r.json();
+      if (r.ok) { document.getElementById('thread-id').value = res.data.thread_id; showToast(res.message || 'Thread ID generated'); }
+      else showToast(res.message || 'Failed to generate Thread ID', 'error');
+    } catch { showToast('Network error', 'error'); }
+  }
+  function copyThreadId() {
+    const v = document.getElementById('thread-id').value;
+    if (v) navigator.clipboard.writeText(v).catch(() => {});
+    showToast('Thread ID copied');
+  }
+
+  /* ── Pipeline step metadata ── */
+  const STEP_META = {
+    'start':        { icon: '🚀', label: 'Pipeline Started',      detail: 'Thread initialized and pipeline is live.' },
+    'doc_loaded':   { icon: '📄', label: 'Documents Selected',    detail: null },
+    'rag_retrieval': { icon: '🔍', label: 'Knowledge Base Query',  detail: 'Hybrid semantic + keyword retrieval from Pinecone for each agent.' },
+    'rag_done':      { icon: '⚡', label: 'Context Ready',         detail: 'Per-agent context retrieved — 7 agents launching.' },
+    'aggregating':  { icon: '🔗', label: 'Aggregating Strategy',  detail: 'Synthesizing all 7 analyses into a unified final strategy brief.' },
+  };
+
+  /* agent key → chain status ID */
+  const AGENT_MAP = {
+    'agent_executive_summary':     'executive_summary',
+    'agent_market_analysis':       'market_analysis',
+    'agent_competitive_landscape': 'competitive_landscape',
+    'agent_monetization_strategy': 'monetization_strategy',
+    'agent_risk_assessment':       'risk_assessment',
+    'agent_roadmap':               'roadmap',
+    'agent_weakness_review':       'weakness_review',
+  };
+
+  const TOTAL_STEPS = 16;
+  let pipeProgress = 0, agentsCompleted = 0, agentStartTime = 0;
+  const peTimers = {};
+
+  /* ── Progress bar ── */
+  function updateProgress(n = 1) {
+    pipeProgress = Math.min(pipeProgress + n, TOTAL_STEPS);
+    const pct = Math.round(pipeProgress / TOTAL_STEPS * 100);
+    document.getElementById('chain-bar-fill').style.width = pct + '%';
+    document.getElementById('chain-pct').textContent = pct + '%';
+  }
+
+  /* ── Pipeline event log (pre-agent steps) ── */
+  function addPipeEvent(step, icon, label, msg, detail, autoMs = 1800) {
+    const log = document.getElementById('pipeline-log');
+    if (log.style.display === 'none' || !log.style.display) {
+      log.style.display = 'flex';
+      log.style.flexDirection = 'column';
+    }
+    const el = document.createElement('div');
+    el.className = 'pipe-event pe-active';
+    el.id = 'pe-' + step;
+    const hasDetail = detail != null;
+    el.innerHTML = `
+      <div class="pe-left"><div class="pe-spinner" id="pe-spin-${step}"></div></div>
+      <div class="pe-body">
+        <div class="pe-row" ${hasDetail ? `onclick="togglePE('${step}')"` : 'style="cursor:default"'}>
+          <span class="pe-icon-sm">${icon}</span>
+          <span class="pe-label">${label}</span>
+          <span class="pe-msg">${msg}</span>
+          ${hasDetail ? `<span class="pe-arr" id="pe-arr-${step}">▶</span>` : ''}
+        </div>
+        ${hasDetail ? `<div class="pe-detail" id="pe-det-${step}">${detail}</div>` : ''}
+      </div>`;
+    log.appendChild(el);
+    if (autoMs > 0) {
+      peTimers[step] = setTimeout(() => { completePE(step); delete peTimers[step]; }, autoMs);
+    }
+  }
+
+  function completePE(step, isError = false) {
+    if (peTimers[step]) { clearTimeout(peTimers[step]); delete peTimers[step]; }
+    const spinner = document.getElementById('pe-spin-' + step);
+    if (!spinner) return;
+    const check = document.createElement('span');
+    check.className = isError ? 'pe-check pe-check-err' : 'pe-check';
+    check.textContent = isError ? '✕' : '✓';
+    spinner.replaceWith(check);
+    const el = document.getElementById('pe-' + step);
+    if (el) el.classList.remove('pe-active');
+  }
+
+  function togglePE(step) {
+    const det = document.getElementById('pe-det-' + step);
+    const arr = document.getElementById('pe-arr-' + step);
+    if (!det) return;
+    const open = det.style.display === 'block';
+    det.style.display = open ? 'none' : 'block';
+    if (arr) arr.style.transform = open ? '' : 'rotate(90deg)';
+  }
+
+  /* ── Chain row status ── */
+  function setChainRunning(chainId) {
+    const cs = document.getElementById('cs-' + chainId);
+    if (cs) cs.innerHTML = '<div class="cs-spinner"></div>';
+  }
+  function setChainDone(chainId, elapsedSec) {
+    const cs = document.getElementById('cs-' + chainId);
+    if (cs) cs.innerHTML = `<span class="cs-done">✓ complete &middot; ${elapsedSec}s</span>`;
+  }
+  function setChainError(chainId) {
+    const cs = document.getElementById('cs-' + chainId);
+    if (cs) cs.innerHTML = '<span class="cs-err">✕ failed</span>';
+  }
+  function resetChains() {
+    Object.values(AGENT_MAP).forEach(id => {
+      const cs = document.getElementById('cs-' + id);
+      if (cs) cs.innerHTML = '<div class="cs-idle"></div>';
+    });
+  }
+
+  /* ── Reset inline state ── */
+  function resetInline() {
+    const log = document.getElementById('pipeline-log');
+    log.innerHTML = '';
+    log.style.display = 'none';
+    document.getElementById('chain-bar-fill').style.width = '0';
+    document.getElementById('chain-pct').style.display = 'none';
+    document.getElementById('chain-progress-bar').style.display = 'none';
+    document.getElementById('completion-banner').style.display = 'none';
+    document.getElementById('chain-card-sub').textContent = 'All chains run simultaneously via RunnableParallel. Status updates in real time after launch.';
+    resetChains();
+    Object.values(peTimers).forEach(clearTimeout);
+    Object.keys(peTimers).forEach(k => delete peTimers[k]);
+    pipeProgress = 0; agentsCompleted = 0; agentStartTime = 0;
+  }
+
+  /* ── Main generation ── */
+  async function startGeneration() {
+    const obj      = objInput.value.trim();
+    const threadId = document.getElementById('thread-id').value.trim();
+    if (!obj)      { showToast('Please enter a strategic objective', 'error'); objInput.focus(); return; }
+    if (!threadId) { showToast('Generate a Thread ID first', 'error'); return; }
+
+    /* Pre-flight: validate query before touching the pipeline */
+    const genBtn = document.getElementById('gen-btn');
+    genBtn.disabled = true;
+    genBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0"></span>Checking query…</span>';
+    const check = await validateQuery(obj);
+    if (!check.valid) {
+      showQueryValidation(check.message || 'That doesn\'t look like a strategy query. Try describing a specific business objective.');
+      genBtn.disabled = false;
+      genBtn.innerHTML = '<span>Launch 7 Analysis Chains</span>';
+      return;
+    }
+    genBtn.innerHTML = '<span>Launch 7 Analysis Chains</span>';
+
+    resetInline();
+    document.getElementById('chain-progress-bar').style.display = 'block';
+    document.getElementById('chain-pct').style.display = 'inline';
+    genBtn.disabled = true;
+    document.getElementById('chain-card-sub').textContent = 'Pipeline running — live status below…';
+
+    const token = localStorage.getItem('access_token');
+    const formData = new FormData();
+    formData.append('input_query', obj);
+    formData.append('thread_id', threadId);
+    selectedDocIds.forEach(id => formData.append('document_ids', id));
+
+    try {
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] ?? '';
+      const headers = { 'X-CSRFToken': csrf };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const resp = await fetch('/main-app/pipeline/start/', {
+        method: 'POST', body: formData, credentials: 'same-origin', headers,
+      });
+      const startData = await resp.json();
+      if (!resp.ok) {
+        showToast(startData.message || 'Failed to start pipeline', 'error');
+        genBtn.disabled = false;
+        return;
+      }
+    } catch {
+      showToast('Network error — could not start pipeline', 'error');
+      document.getElementById('gen-btn').disabled = false;
+      return;
+    }
+
+    const source = new EventSource(`/main-app/pipeline/stream/${threadId}/`);
+
+    source.onmessage = (e) => {
+      const { step, message, done, error } = JSON.parse(e.data);
+
+      /* ── Agent complete ── */
+      if (AGENT_MAP[step]) {
+        const chainId = AGENT_MAP[step];
+        const elapsed = agentStartTime ? ((Date.now() - agentStartTime) / 1000).toFixed(1) : '?';
+        setChainDone(chainId, elapsed);
+        agentsCompleted++;
+        updateProgress();
+        if (agentsCompleted === 7) {
+          completePE('agents_start');
+        }
+        return;
+      }
+
+      /* ── agents_start: spin all 7 chain rows ── */
+      if (step === 'agents_start') {
+        agentStartTime = Date.now();
+        addPipeEvent('agents_start', '🤖', 'Agents Launched', message, '7 chains running in parallel via RunnableParallel.', 0);
+        Object.values(AGENT_MAP).forEach(id => setChainRunning(id));
+        updateProgress();
+        return;
+      }
+
+      /* ── done ── */
+      if (done && !error) {
+        source.close();
+        completePE('aggregating');
+        updateProgress(2);
+        document.getElementById('completion-banner').style.display = 'block';
+        document.getElementById('chain-card-sub').textContent = 'All 7 chains complete. Strategy synthesized.';
+        document.getElementById('chain-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        let secs = 2;
+        const countdown = setInterval(() => {
+          document.getElementById('completion-sub').textContent = `Redirecting to your report in ${secs} second${secs !== 1 ? 's' : ''}…`;
+          secs--;
+          if (secs < 0) {
+            clearInterval(countdown);
+            window.location.href = `/main-app/report/?thread=${threadId}`;
+          }
+        }, 1000);
+        return;
+      }
+
+      /* ── error ── */
+      if (error) {
+        source.close();
+        addPipeEvent('pipeline_err', '❌', 'Pipeline Failed', message, message, 0);
+        completePE('pipeline_err', true);
+        Object.values(AGENT_MAP).forEach(id => {
+          const cs = document.getElementById('cs-' + id);
+          if (cs && cs.querySelector('.cs-spinner')) setChainError(id);
+        });
+        showToast(message, 'error');
+        genBtn.disabled = false;
+        document.getElementById('chain-card-sub').textContent = 'Pipeline failed — see error above.';
+        return;
+      }
+
+      /* ── regular pipeline step ── */
+      const m = STEP_META[step];
+      if (m) {
+        addPipeEvent(step, m.icon, m.label, message, m.detail);
+        updateProgress();
+      }
+    };
+
+    source.onerror = () => {
+      source.close();
+      showToast('Stream connection lost', 'error');
+      document.getElementById('gen-btn').disabled = false;
+    };
+  }
+</script>
+</body>
+</html>
