@@ -1,6 +1,20 @@
 # Autonomous AI Strategy Engine
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Django](https://img.shields.io/badge/Django-6.0-green)
+![LangChain](https://img.shields.io/badge/LangChain-Groq-orange)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+
 A multi-agent AI system that takes a business objective and autonomously generates a comprehensive, data-backed strategic report — powered by LangChain, Groq, RAG, and parallel agent execution.
+
+---
+
+## Demo
+
+> Watch the full walkthrough — query input → live agent execution → final strategy report
+
+https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine/raw/main/auth_app/demo/demo_ai_engine.mov
 
 ---
 
@@ -90,7 +104,7 @@ Final Strategy Report (saved to DB + returned to frontend)
 
 | Dashboard | Reports |
 |-----------|---------|
-| ![Dashboard](screenshots/dashboard.png) | ![Reports](screenshots/reports.png) |
+| ![Dashboard](screenshots/Dashboard.png) | ![Reports](screenshots/reports.png) |
 
 | Knowledge Base | Strategy |
 |-----------|---------|
@@ -110,8 +124,8 @@ Final Strategy Report (saved to DB + returned to frontend)
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/autonomous-ai-strategy-engine.git
-cd autonomous-ai-strategy-engine
+git clone https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine.git
+cd Autonomous-Ai-Strategy-Engine
 ```
 
 ### 2. Create a Virtual Environment

@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from auth_app.models import User
@@ -37,6 +38,9 @@ def get_or_create_user(backend, details, response, user=None, *args, **kwargs):
 def generate_jwt_and_redirect(backend, user, *args, **kwargs):
     if not user:
         return HttpResponseRedirect('/auth-api/user_signup/')
+
+    user.backend = 'django.contrib.auth.backends.ModelBackend'
+    login(backend.strategy.request, user)
 
     refresh = RefreshToken.for_user(user)
     access  = str(refresh.access_token)

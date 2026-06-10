@@ -17,9 +17,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path,include
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
+    path("", RedirectView.as_view(url="/main-app/home/", permanent=False)),
     path("admin/", admin.site.urls),
     path("auth-api/", include("auth_app.urls")),
     path("main-app/", include("main_app.urls")),
