@@ -14,7 +14,7 @@ A multi-agent AI system that takes a business objective and autonomously generat
 
 > Watch the full walkthrough — query input → live agent execution → final strategy report
 
-https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine/raw/main/auth_app/demo/demo_ai_engine.mov
+https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine/raw/main/demo/demo_ai_engine.mov
 
 ---
 
