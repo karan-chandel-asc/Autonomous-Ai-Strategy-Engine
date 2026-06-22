@@ -304,5 +304,4 @@ Pull requests are welcome. For major changes, open an issue first to discuss wha
 
 Built by **Karan Chandel**
 
-- GitHub: [your-github-profile](https://github.com/your-username)
-- LinkedIn: [your-linkedin](https://linkedin.com/in/your-profile)
+- GitHub: [karan-chandel-asc](https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine)
