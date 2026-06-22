@@ -1,4 +1,3 @@
-import faiss
 import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .models import *

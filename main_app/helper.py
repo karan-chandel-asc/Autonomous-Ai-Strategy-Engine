@@ -103,25 +103,6 @@ class ChunkService:
     
     
     
-class faissService:
-    def save_faiss_index_file_path(self, thread_id, index):
-        folder = "faiss_indexes"
-        os.makedirs(folder, exist_ok=True)
-
-        path = f"{folder}/thread_{thread_id}.index"
-        faiss.write_index(index, path)
-        return path
-    
-    def save_faiss_index_path_in_db(self, thread_id, index_path):
-        try:
-            thread = Thread.objects.get(thread_id=thread_id)
-        except Thread.DoesNotExist:
-            raise ValueError(f"Thread '{thread_id}' not found in DB")
-        Vector_storage.objects.update_or_create(
-            thread=thread,
-            defaults={"vector_path": index_path, "metadata": {}}
-        )
-        
 # Cohere query embedder — cached once per worker process
 _GEMINI_EMB_CACHE = None
 
