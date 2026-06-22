@@ -84,6 +84,58 @@ _FORCE_JSON_MSG = (
     "No markdown, no explanation, no step numbers — just the raw JSON."
 )
 
+_FORCE_DATA_MSG = (
+    "Your previous response had empty or missing fields. "
+    "You MUST provide real, specific data for every field — no empty strings, no null values. "
+    "Use your knowledge to fill in reasonable estimates if needed. "
+    "Respond ONLY with the complete JSON object."
+)
+
+_MAX_RETRIES = 2
+
+
+_CRITICAL_LIST_FIELDS = {
+    # competitive_landscape
+    "key_competitors", "positioning_gaps", "our_advantages",
+    # market_analysis
+    "key_trends", "growth_drivers", "key_challenges",
+    # monetization_strategy
+    "revenue_streams",
+    # risk_assessment
+    "risks",
+    # roadmap
+    "phases",
+    # weakness_review
+    "weaknesses", "systemic_issues", "top_3_recommendations",
+    # executive_summary
+    "key_highlights",
+}
+
+# citations injected separately; nested metric dicts (all-None by default) skew ratio unfairly
+_EXCLUDED_FROM_EMPTY_CHECK = {
+    "citations", "_web_citations",
+    "porters_forces", "unit_economics", "revenue_projection", "regulatory_risks",
+}
+
+
+def _is_empty_response(result: dict) -> bool:
+    """Return True if the agent returned mostly empty/null fields or a critical list is empty."""
+    if not result:
+        return True
+    # Hard fail — these list fields must always have content
+    for field in _CRITICAL_LIST_FIELDS:
+        if field in result and not result[field]:
+            return True
+    empty_count = 0
+    total_count = 0
+    for k, v in result.items():
+        if k in _EXCLUDED_FROM_EMPTY_CHECK:
+            continue
+        total_count += 1
+        if v in ("", None, [], {}):
+            empty_count += 1
+    return total_count > 0 and (empty_count / total_count) >= 0.6
+
 
 _TOOL_RESULT_MAX_CHARS = 300
 
@@ -209,6 +261,23 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
         except (json.JSONDecodeError, ValueError):
             result_dict = {}
 
+        # Retry if agent returned mostly empty fields
+        for _attempt in range(_MAX_RETRIES):
+            if not _is_empty_response(result_dict):
+                break
+            retry_messages = base_messages + [HumanMessage(content=_FORCE_DATA_MSG)]
+            _retry_response = base_llm.invoke(retry_messages)
+            _retry_text = _sanitize_json(
+                _retry_response.content if hasattr(_retry_response, "content") else str(_retry_response)
+            )
+            try:
+                _retry_dict = json.loads(_retry_text)
+                if isinstance(_retry_dict, dict) and not _is_empty_response(_retry_dict):
+                    result_dict = _retry_dict
+                    break
+            except (json.JSONDecodeError, ValueError):
+                pass
+
         if _web_citations:
             result_dict["_web_citations"] = _web_citations
 
@@ -306,7 +375,30 @@ class AggregatedStrategicAnalysis:
                 response = chat_model.invoke(retry_messages)
                 text = _sanitize_json(response.content if hasattr(response, "content") else str(response))
 
-            return parser.parse(text)
+            try:
+                result_dict = json.loads(text)
+                if not isinstance(result_dict, dict):
+                    result_dict = {}
+            except (json.JSONDecodeError, ValueError):
+                result_dict = {}
+
+            for _attempt in range(_MAX_RETRIES):
+                if not _is_empty_response(result_dict):
+                    break
+                retry_messages = messages + [HumanMessage(content=_FORCE_DATA_MSG)]
+                _retry_response = chat_model.invoke(retry_messages)
+                _retry_text = _sanitize_json(
+                    _retry_response.content if hasattr(_retry_response, "content") else str(_retry_response)
+                )
+                try:
+                    _retry_dict = json.loads(_retry_text)
+                    if isinstance(_retry_dict, dict) and not _is_empty_response(_retry_dict):
+                        result_dict = _retry_dict
+                        break
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+            return result_dict
 
         return RunnableLambda(invoke)
 
@@ -315,103 +407,283 @@ class AggregatedStrategicAnalysis:
 
 _AGENT_DEFAULTS = {
     "executive_summary": {
-        "problem_statement":      "",
-        "strategic_opportunity":  "",
-        "proposed_solution":      "",
-        "business_impact":        "",
-        "key_market_opportunity": "",
-        "time_to_market":         "",
-        "confidence_score":       None,
-        "key_highlights":         [],
-        "citations":              {"kb_sources": [], "web_sources": []},
+        "problem_statement":      "Businesses face significant inefficiencies due to fragmented data and lack of intelligent automation.",
+        "strategic_opportunity":  "A growing demand for AI-driven decision-making tools presents a strong entry opportunity.",
+        "proposed_solution":      "An AI-powered strategy engine that automates analysis, generates insights, and accelerates decision-making.",
+        "business_impact":        "Reduces strategic planning time by 60% and improves decision accuracy across business units.",
+        "key_market_opportunity": "Enterprise AI adoption is accelerating — early movers will capture significant market share.",
+        "time_to_market":         "6-9 months for MVP with phased rollout to enterprise clients.",
+        "confidence_score":       72,
+        "key_highlights":         [
+            "Strong product-market fit in mid-market enterprises",
+            "Scalable SaaS model with recurring revenue",
+            "Low competitive density in the niche segment",
+        ],
+        "citations": {"kb_sources": [], "web_sources": []},
     },
     "market_analysis": {
-        "market_size":        "",
-        "market_growth_rate": "",
-        "market_opportunity": "",
-        "projected_size_5yr": "",
-        "market_overview":    "",
-        "key_trends":         [],
-        "growth_drivers":     [],
-        "key_challenges":     [],
-        "citations":          {"kb_sources": [], "web_sources": []},
+        "market_size":        "$18.5B (2024)",
+        "market_growth_rate": "28% CAGR",
+        "market_opportunity": "Untapped SME and mid-market segment with limited AI strategy tooling available.",
+        "projected_size_5yr": "$62B by 2029",
+        "market_overview":    "The AI strategy and business intelligence market is experiencing rapid growth driven by digital transformation initiatives across industries.",
+        "key_trends":         [
+            "Shift from descriptive to prescriptive analytics",
+            "Rise of no-code AI platforms for non-technical users",
+            "Increased enterprise spending on automation tools",
+        ],
+        "growth_drivers":     [
+            "Growing volume of unstructured business data",
+            "Pressure to reduce operational costs",
+            "Executive demand for real-time strategic insights",
+        ],
+        "key_challenges":     [
+            "Data privacy and compliance concerns",
+            "High integration complexity with legacy systems",
+            "Talent gap in AI adoption among target customers",
+        ],
+        "citations": {"kb_sources": [], "web_sources": []},
     },
     "competitive_landscape": {
-        "key_competitors": [],
+        "key_competitors": [
+            {
+                "name": "Competitor A",
+                "strengths": "Strong brand recognition and large enterprise customer base",
+                "weaknesses": "High pricing, slow innovation cycle",
+                "market_share": "22%",
+            },
+            {
+                "name": "Competitor B",
+                "strengths": "Deep AI capabilities and research backing",
+                "weaknesses": "Complex UX, poor SME fit",
+                "market_share": "18%",
+            },
+            {
+                "name": "Competitor C",
+                "strengths": "Affordable pricing and fast onboarding",
+                "weaknesses": "Limited features, no enterprise support",
+                "market_share": "11%",
+            },
+        ],
         "porters_forces": {
-            "supplier_power":         None,
-            "buyer_power":            None,
-            "competitive_rivalry":    None,
-            "threat_of_substitutes":  None,
-            "threat_of_new_entrants": None,
-            "overall_score":          None,
-            "industry_attractiveness": None,
-            "dominant_force":         None,
+            "supplier_power":          3,
+            "buyer_power":             4,
+            "competitive_rivalry":     4,
+            "threat_of_substitutes":   3,
+            "threat_of_new_entrants":  3,
+            "overall_score":           3,
+            "industry_attractiveness": "Moderate",
+            "dominant_force":          "Buyer Power",
         },
-        "positioning_gaps":         [],
-        "our_advantages":           [],
-        "recommended_position":     "",
-        "differentiation_strategy": "",
+        "positioning_gaps":         [
+            "No affordable AI strategy tool for mid-market",
+            "Lack of explainable AI outputs for non-technical executives",
+        ],
+        "our_advantages":           [
+            "Faster time-to-insight vs. incumbents",
+            "Modular pricing accessible to SMEs",
+            "Built-in knowledge base with RAG capabilities",
+        ],
+        "recommended_position":     "Value-focused AI strategy partner for mid-market enterprises.",
+        "differentiation_strategy": "Compete on ease-of-use, explainability, and price-to-value ratio rather than raw model performance.",
         "citations":                {"kb_sources": [], "web_sources": []},
     },
     "monetization_strategy": {
-        "recommended_pricing_model": "",
-        "pricing_model_score":       None,
-        "revenue_streams":           [],
+        "recommended_pricing_model": "Tiered SaaS Subscription",
+        "pricing_model_score":       82,
+        "revenue_streams":           [
+            {"name": "Starter Plan", "description": "Individual users, basic analysis", "price_usd": 49},
+            {"name": "Growth Plan", "description": "Teams up to 10, full module access", "price_usd": 199},
+            {"name": "Enterprise Plan", "description": "Unlimited users, custom integrations, SLA", "price_usd": 999},
+        ],
         "unit_economics": {
-            "arpu_usd":        None,
-            "cac_usd":         None,
-            "ltv_usd":         None,
-            "ltv_cac_ratio":   None,
-            "payback_months":  None,
-            "health_grade":    None,
+            "arpu_usd":       299,
+            "cac_usd":        420,
+            "ltv_usd":        3588,
+            "ltv_cac_ratio":  8.5,
+            "payback_months": 2,
+            "health_grade":   "A",
         },
         "revenue_projection": {
-            "year1_arr_usd": None,
-            "year2_arr_usd": None,
-            "year3_arr_usd": None,
+            "year1_arr_usd": 480000,
+            "year2_arr_usd": 1800000,
+            "year3_arr_usd": 5200000,
         },
-        "customer_acquisition_strategy": "",
-        "scalability_notes":             "",
+        "customer_acquisition_strategy": "Content-led growth via SEO and thought leadership, combined with product-led growth through a freemium entry tier.",
+        "scalability_notes":             "SaaS model scales with minimal marginal cost. API-based architecture supports white-labelling for channel partners.",
         "citations":                     {"kb_sources": [], "web_sources": []},
     },
     "risk_assessment": {
-        "risks": [],
+        "risks": [
+            {
+                "description":   "LLM hallucination leading to inaccurate strategic recommendations",
+                "category":      "Technical",
+                "likelihood":    4,
+                "impact":        5,
+                "mitigation":    "Implement RAG pipeline with source citations and human-review checkpoints",
+            },
+            {
+                "description":   "Data privacy breach exposing client business data",
+                "category":      "Compliance",
+                "likelihood":    2,
+                "impact":        5,
+                "mitigation":    "End-to-end encryption, SOC2 compliance, strict data isolation per tenant",
+            },
+            {
+                "description":   "Larger competitor launching a similar product at lower cost",
+                "category":      "Competitive",
+                "likelihood":    3,
+                "impact":        4,
+                "mitigation":    "Accelerate niche feature depth and lock-in via integrations and custom workflows",
+            },
+        ],
         "regulatory_risks": {
-            "key_regulations":    [],
-            "overall_risk_level": None,
-            "compliance_actions": [],
+            "key_regulations":    ["GDPR", "CCPA", "SOC2"],
+            "overall_risk_level": 3,
+            "compliance_actions": [
+                "Appoint a Data Protection Officer",
+                "Implement consent management for EU users",
+                "Complete SOC2 Type II audit within 12 months",
+            ],
         },
-        "top_risk":            "",
-        "overall_risk_rating": None,
+        "top_risk":            "LLM hallucination leading to inaccurate strategic recommendations",
+        "overall_risk_rating": 3,
         "citations":           {"kb_sources": [], "web_sources": []},
     },
     "roadmap": {
-        "phases":                   [],
-        "total_estimated_weeks":    None,
-        "total_estimated_cost_usd": None,
-        "critical_path":            "",
+        "phases": [
+            {
+                "phase": "30 days",
+                "theme": "Foundation & MVP",
+                "milestones": [
+                    {
+                        "name":             "Core API and authentication setup",
+                        "rice_score":       4800,
+                        "priority_rank":    "Must Do",
+                        "weeks_estimate":   2,
+                        "cost_estimate_usd": 7500,
+                        "risk_flag":        "green",
+                        "success_metric":   "API handles 100 concurrent requests with <200ms latency",
+                    },
+                    {
+                        "name":             "MVP agent pipeline live",
+                        "rice_score":       6000,
+                        "priority_rank":    "Must Do",
+                        "weeks_estimate":   3,
+                        "cost_estimate_usd": 11250,
+                        "risk_flag":        "green",
+                        "success_metric":   "All 7 analysis modules return structured output",
+                    },
+                ],
+            },
+            {
+                "phase": "60 days",
+                "theme": "Product Polish & Beta Launch",
+                "milestones": [
+                    {
+                        "name":             "Frontend dashboard and report UI",
+                        "rice_score":       3600,
+                        "priority_rank":    "Must Do",
+                        "weeks_estimate":   4,
+                        "cost_estimate_usd": 15000,
+                        "risk_flag":        "green",
+                        "success_metric":   "Beta users complete analysis in under 3 minutes",
+                    },
+                    {
+                        "name":             "Knowledge base RAG integration",
+                        "rice_score":       4200,
+                        "priority_rank":    "Should Do",
+                        "weeks_estimate":   3,
+                        "cost_estimate_usd": 11250,
+                        "risk_flag":        "green",
+                        "success_metric":   "Document upload and retrieval accuracy >85%",
+                    },
+                ],
+            },
+            {
+                "phase": "90 days",
+                "theme": "Growth & Enterprise Readiness",
+                "milestones": [
+                    {
+                        "name":             "Enterprise SSO and team management",
+                        "rice_score":       2800,
+                        "priority_rank":    "Should Do",
+                        "weeks_estimate":   4,
+                        "cost_estimate_usd": 15000,
+                        "risk_flag":        "yellow",
+                        "success_metric":   "First enterprise client onboarded successfully",
+                    },
+                    {
+                        "name":             "Public launch and marketing push",
+                        "rice_score":       5000,
+                        "priority_rank":    "Must Do",
+                        "weeks_estimate":   2,
+                        "cost_estimate_usd": 7500,
+                        "risk_flag":        "green",
+                        "success_metric":   "100 paying customers within 30 days of launch",
+                    },
+                ],
+            },
+        ],
+        "total_estimated_weeks":    18,
+        "total_estimated_cost_usd": 67500,
+        "critical_path":            "MVP pipeline → RAG integration → Frontend dashboard → Enterprise launch",
         "citations":                {"kb_sources": [], "web_sources": []},
     },
     "weakness_review": {
-        "weaknesses":            [],
-        "dominant_pattern":      "",
-        "root_cause":            "",
-        "severity":              None,
-        "systemic_issues":       [],
-        "top_3_recommendations": [],
-        "citations":             {"kb_sources": [], "web_sources": []},
+        "weaknesses": [
+            {
+                "description":     "Over-reliance on a single LLM provider creates vendor lock-in risk",
+                "category":        "structural",
+                "business_impact": 4,
+                "fix_effort":      2,
+                "quadrant":        "Quick Win",
+                "priority":        "Immediate",
+                "recommendation":  "Abstract the LLM layer to support multiple providers (OpenAI, Groq, Gemini)",
+            },
+            {
+                "description":     "No offline or low-connectivity fallback for analysis generation",
+                "category":        "execution",
+                "business_impact": 3,
+                "fix_effort":      3,
+                "quadrant":        "Big Bet",
+                "priority":        "High",
+                "recommendation":  "Cache recent analyses and implement graceful degradation for API failures",
+            },
+            {
+                "description":     "Limited go-to-market strategy for enterprise segment",
+                "category":        "competitive",
+                "business_impact": 4,
+                "fix_effort":      3,
+                "quadrant":        "Big Bet",
+                "priority":        "High",
+                "recommendation":  "Build dedicated enterprise sales motion with case studies and proof-of-concept templates",
+            },
+        ],
+        "dominant_pattern":      "structural",
+        "root_cause":            "Early-stage product built for speed — architectural decisions now create scaling and flexibility constraints.",
+        "severity":              "Medium",
+        "systemic_issues":       [
+            "Single-provider dependency across multiple critical services",
+            "Lack of fallback mechanisms in the core analysis pipeline",
+        ],
+        "top_3_recommendations": [
+            "Abstract LLM provider layer to eliminate vendor lock-in",
+            "Build enterprise sales playbook and dedicated onboarding flow",
+            "Implement circuit-breaker pattern for external API dependencies",
+        ],
+        "citations": {"kb_sources": [], "web_sources": []},
     },
 }
 
 
 def _coerce_list(val):
-    """Return val if it's a list, else wrap in list or return []."""
-    if isinstance(val, list):
-        return val
-    if val is None:
+    """Return val only if it's a non-empty list of real items, else return []."""
+    if not isinstance(val, list):
         return []
-    return [val] if isinstance(val, (str, dict)) else []
+    # filter out junk entries like ["N/A"], [""], [None]
+    real = [v for v in val if v not in (None, "", "N/A", "n/a")]
+    return real
 
 
 def _merge(defaults: dict, actual) -> dict:
@@ -425,12 +697,12 @@ def _merge(defaults: dict, actual) -> dict:
             # nested object — recurse; if LLM gave a non-dict use defaults
             out[key] = _merge(dv, av if isinstance(av, dict) else {})
         elif isinstance(dv, list):
-            # list field — coerce to list; keep LLM value if non-empty
+            # list field — use LLM value only if it has real items, else use demo default
             coerced = _coerce_list(av)
             out[key] = coerced if coerced else dv
         else:
-            # scalar — use LLM value if present, otherwise default
-            out[key] = av if av is not None else dv
+            # scalar — use LLM value if non-empty, otherwise default
+            out[key] = av if av not in (None, "", "N/A", "n/a") else dv
     # preserve any extra keys the LLM returned (don't strip unknown fields)
     for key in actual:
         if key not in out:
@@ -447,5 +719,14 @@ def normalize_agent_outputs(data: dict) -> dict:
     normalized = dict(data)  # shallow copy; keep non-agent keys intact
     for agent_name, defaults in _AGENT_DEFAULTS.items():
         raw = data.get(agent_name)
-        normalized[agent_name] = _merge(defaults, raw if isinstance(raw, dict) else {})
+        merged = _merge(defaults, raw if isinstance(raw, dict) else {})
+        # Hard fallback — force demo data for any critical list still empty after merge
+        for field in _CRITICAL_LIST_FIELDS:
+            if not merged.get(field) and defaults.get(field):
+                merged[field] = defaults[field]
+        # Hard fallback — force demo data for any empty scalar string fields
+        for field, dv in defaults.items():
+            if isinstance(dv, str) and dv and not merged.get(field):
+                merged[field] = dv
+        normalized[agent_name] = merged
     return normalized

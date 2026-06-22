@@ -258,7 +258,7 @@ class DashboardStatsView(APIView):
             'competitive_landscape': 'Competitive Landscape',
             'monetization_strategy': 'Monetization Strategy',
             'risk_assessment':       'Risk Assessment',
-            'product_roadmap':       'Product Roadmap',
+            'roadmap':               'Product Roadmap',
             'weakness_review':       'Weakness Review',
         }
         module_usage = []

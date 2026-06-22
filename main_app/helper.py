@@ -122,7 +122,7 @@ class faissService:
             defaults={"vector_path": index_path, "metadata": {}}
         )
         
-# Gemini query embedder — cached once per worker process
+# Cohere query embedder — cached once per worker process
 _GEMINI_EMB_CACHE = None
 
 
@@ -139,14 +139,14 @@ class HybridRAGService:
         kb_citations_list is [{"doc_name": str, "page": int, "snippet": str}].
         """
         global _GEMINI_EMB_CACHE
-        from .embedding_service import GeminiQueryEmbedding
+        from .embedding_service import CohereQueryEmbedding
         from .pinecone_service import PineconeService
 
         if not self.document_ids:
             return "", []
 
         if _GEMINI_EMB_CACHE is None:
-            _GEMINI_EMB_CACHE = GeminiQueryEmbedding()
+            _GEMINI_EMB_CACHE = CohereQueryEmbedding()
 
         try:
             query_vec = _GEMINI_EMB_CACHE.embed_query(query)

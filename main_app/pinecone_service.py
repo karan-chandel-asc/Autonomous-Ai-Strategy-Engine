@@ -21,7 +21,7 @@ def _get_index():
     if index_name not in existing:
         pc.create_index(
             name=index_name,
-            dimension=384,
+            dimension=1024,
             metric="cosine",
             spec=ServerlessSpec(
                 cloud=os.environ.get("PINECONE_CLOUD", "aws"),
