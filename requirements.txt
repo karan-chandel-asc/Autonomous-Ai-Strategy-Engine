@@ -46,7 +46,7 @@ docx2txt==0.9
 lxml==6.1.1
 
 # Data
-numpy==1.26.4
+numpy
 pandas==3.0.3
 scikit-learn==1.9.0
 
