@@ -96,12 +96,16 @@ class ValidateQueryView(APIView):
             "Keep it warm and natural. Never lecture."
         )
         try:
-            from .langchain_models import get_groq_model_name, invoke_with_rate_limit_retry
-            llm = ChatGroq(
-                model=get_groq_model_name(),
-                temperature=0,
-                max_tokens=80,
-            )
+            from .langchain_models import get_groq_model_name, invoke_with_rate_limit_retry, get_current_groq_api_key
+            llm_kwargs = {
+                "model": get_groq_model_name(),
+                "temperature": 0,
+                "max_tokens": 80,
+            }
+            key = get_current_groq_api_key()
+            if key:
+                llm_kwargs["api_key"] = key
+            llm = ChatGroq(**llm_kwargs)
             resp = invoke_with_rate_limit_retry(
                 llm, [SystemMessage(content=SYSTEM), LCHuman(content=query)]
             )

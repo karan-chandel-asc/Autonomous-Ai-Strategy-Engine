@@ -10,9 +10,9 @@ from .prompt_services import PromptService
 from .langchain_models import Lanchain_models, invoke_with_rate_limit_retry
 
 # Free-tier TPM (~12k). Tools disabled → 1 LLM call per agent.
-# Batch of 3 keeps peak burst ~3.5–4.5k; full report targets <12k.
-_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", "3"))
-_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "4"))
+# Smaller batches + longer pause = safer on prod ForkPool workers.
+_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", "2"))
+_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "8"))
 _CONTEXT_MAX_CHARS = int(os.environ.get("GROQ_CONTEXT_MAX_CHARS", "500"))
 
 
