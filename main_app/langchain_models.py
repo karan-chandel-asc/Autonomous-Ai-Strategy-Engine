@@ -7,9 +7,10 @@ from langchain_groq import ChatGroq
 # Note: llama-3.3-70b-versatile is scheduled for shutdown on 2026-08-16.
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 
-# Free / on_demand tiers are TPM-capped (~8k–12k). Keep completions short.
-_CHAT_MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "650"))
-_JSON_MAX_TOKENS = int(os.environ.get("GROQ_JSON_MAX_TOKENS", "400"))
+# Free / on_demand tiers are TPM-capped (~12k). Keep completions short.
+# No-tools path ≈ 8 LLM calls/report; these caps keep a full run under 12k TPM.
+_CHAT_MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "450"))
+_JSON_MAX_TOKENS = int(os.environ.get("GROQ_JSON_MAX_TOKENS", "280"))
 _RATE_LIMIT_ATTEMPTS = int(os.environ.get("GROQ_RATE_LIMIT_ATTEMPTS", "5"))
 
 

@@ -8,17 +8,12 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.messages import ToolMessage, HumanMessage
 from .prompt_services import PromptService
 from .langchain_models import Lanchain_models, invoke_with_rate_limit_retry
-from .layer_wise_tools import MarketLayerWiseTools
 
-# Free-tier TPM (~12k): never fire all 7 agents at once.
-# Tool agents = 2 LLM calls each → smaller batches.
-# No-tool agents = 1 LLM call each → can run as a larger group.
-_TOOL_BATCH_SIZE = int(os.environ.get("GROQ_TOOL_BATCH_SIZE", "2"))
-_NOTOOL_BATCH_SIZE = int(os.environ.get("GROQ_NOTOOL_BATCH_SIZE", "3"))
-_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "5"))
-_CONTEXT_MAX_CHARS = int(os.environ.get("GROQ_CONTEXT_MAX_CHARS", "700"))
-# Back-compat env used by older deploys
-_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", str(_TOOL_BATCH_SIZE)))
+# Free-tier TPM (~12k). Tools disabled → 1 LLM call per agent.
+# Batch of 3 keeps peak burst ~3.5–4.5k; full report targets <12k.
+_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", "3"))
+_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "4"))
+_CONTEXT_MAX_CHARS = int(os.environ.get("GROQ_CONTEXT_MAX_CHARS", "500"))
 
 
 def _sanitize_json(text: str) -> str:
@@ -104,7 +99,8 @@ _FORCE_DATA_MSG = (
     "Respond ONLY with the complete JSON object."
 )
 
-_MAX_RETRIES = 1
+# Defaults fill gaps via normalize_agent_outputs — skip costly empty retries.
+_MAX_RETRIES = 0
 
 
 _CRITICAL_LIST_FIELDS = {
@@ -318,43 +314,41 @@ class ParallelStrategicAnalysis:
         self.PromptService = PromptService()
         self.parser = JsonOutputParser()
         self.llm = Lanchain_models()
-        self.tools = MarketLayerWiseTools(thread_id=thread_id)
 
-    def _chain(self, prompt_key, tools_list, agent_name):
+    def _chain(self, prompt_key, agent_name):
+        """Single-call agent chain (tools disabled for free-tier TPM)."""
         context = _truncate_context(self.contexts.get(agent_name, ""))
         prompt = self.PromptService.get_prompt(prompt_key)
         chat_model = self.llm.get_chat_model()
-        bound = chat_model.bind_tools(tools_list) if tools_list else chat_model
-        by_name = {t.name: t for t in tools_list}
-        inner = _build_agent_chain(prompt, bound, chat_model, by_name, self.parser)
+        inner = _build_agent_chain(prompt, chat_model, chat_model, {}, self.parser)
         return RunnableLambda(lambda inp, ctx=context: inner.invoke({**inp, "context": ctx}))
 
     def _agent_specs(self):
         return [
-            ("executive_summary", "EXECUTIVE_SUMMARY_PROMPT", self.tools.get_executive_summary_tools()),
-            ("market_analysis", "MARKET_ANALYSIS_PROMPT", self.tools.get_market_analysis_tools()),
-            ("competitive_landscape", "COMPETITIVE_LANDSCAPE_PROMPT", self.tools.get_competitive_landscape_tools()),
-            ("monetization_strategy", "MONETIZATION_STRATEGY_PROMPT", self.tools.get_monetization_tools()),
-            ("risk_assessment", "RISK_ASSESSMENT_PROMPT", self.tools.get_risk_assessment_tools()),
-            ("roadmap", "ROADMAP_PROMPT", self.tools.get_roadmap_tools()),
-            ("weakness_review", "WEAKNESS_REVIEW_PROMPT", self.tools.get_weakness_review_tools()),
+            ("executive_summary", "EXECUTIVE_SUMMARY_PROMPT"),
+            ("market_analysis", "MARKET_ANALYSIS_PROMPT"),
+            ("competitive_landscape", "COMPETITIVE_LANDSCAPE_PROMPT"),
+            ("monetization_strategy", "MONETIZATION_STRATEGY_PROMPT"),
+            ("risk_assessment", "RISK_ASSESSMENT_PROMPT"),
+            ("roadmap", "ROADMAP_PROMPT"),
+            ("weakness_review", "WEAKNESS_REVIEW_PROMPT"),
         ]
 
     def make_parallel_chains(self):
         """Legacy parallel runner — prefer run_batched() on free-tier Groq."""
         return RunnableParallel(**{
-            name: self._chain(prompt_key, tools, name)
-            for name, prompt_key, tools in self._agent_specs()
+            name: self._chain(prompt_key, name)
+            for name, prompt_key in self._agent_specs()
         })
 
     def _run_batch(self, batch, objective: str, results: dict) -> None:
         with ThreadPoolExecutor(max_workers=max(1, len(batch))) as pool:
             futures = {
                 pool.submit(
-                    self._chain(prompt_key, tools, name).invoke,
+                    self._chain(prompt_key, name).invoke,
                     {"objective": objective},
                 ): name
-                for name, prompt_key, tools in batch
+                for name, prompt_key in batch
             }
             for fut in as_completed(futures):
                 name = futures[fut]
@@ -364,32 +358,14 @@ class ParallelStrategicAnalysis:
                     results[name] = {"error": str(exc)}
 
     def run_batched(self, objective: str) -> dict:
-        """Run agents in TPM-safe batches, optimized for speed.
-
-        Tool agents (2 LLM calls) run in small batches.
-        No-tool agents (1 LLM call) run together afterward — less wait time.
-        """
+        """Run agents in TPM-safe batches (1 LLM call each, tools off)."""
         specs = self._agent_specs()
-        tool_specs = [s for s in specs if s[2]]
-        no_tool_specs = [s for s in specs if not s[2]]
         results = {}
-
-        tool_batch = max(1, _TOOL_BATCH_SIZE if _TOOL_BATCH_SIZE else _AGENT_BATCH_SIZE)
-        no_tool_batch = max(1, _NOTOOL_BATCH_SIZE)
-        first_batch = True
-
-        for i in range(0, len(tool_specs), tool_batch):
-            if not first_batch and _AGENT_BATCH_PAUSE_S > 0:
+        batch_size = max(1, _AGENT_BATCH_SIZE)
+        for i in range(0, len(specs), batch_size):
+            if i > 0 and _AGENT_BATCH_PAUSE_S > 0:
                 time.sleep(_AGENT_BATCH_PAUSE_S)
-            first_batch = False
-            self._run_batch(tool_specs[i:i + tool_batch], objective, results)
-
-        for i in range(0, len(no_tool_specs), no_tool_batch):
-            if not first_batch and _AGENT_BATCH_PAUSE_S > 0:
-                time.sleep(_AGENT_BATCH_PAUSE_S)
-            first_batch = False
-            self._run_batch(no_tool_specs[i:i + no_tool_batch], objective, results)
-
+            self._run_batch(specs[i:i + batch_size], objective, results)
         return results
 
 

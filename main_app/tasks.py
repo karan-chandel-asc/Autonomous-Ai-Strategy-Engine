@@ -119,7 +119,7 @@ def run_pipeline_task(thread_id, input_query, document_ids=None):
             emit(thread_id, "doc_loaded", "No documents selected — running on objective only")
 
         # ── AI Agents ──────────────────────────────────────────────
-        emit(thread_id, "agents_start", "Running 7 AI agents in rate-limit-safe batches...")
+        emit(thread_id, "agents_start", "Running 7 AI agents (TPM-safe batches)...")
 
         agent_names = [
             "executive_summary", "market_analysis", "competitive_landscape",
