@@ -204,7 +204,7 @@ sequenceDiagram
 | Layer | Technology |
 |---|---|
 | Backend | Django 5.2, Django REST Framework |
-| LLM | Groq — `openai/gpt-oss-120b` (override via `GROQ_MODEL`) |
+| LLM | Groq — `llama-3.3-70b-versatile` (override via `GROQ_MODEL`) |
 | Orchestration | LangChain (`RunnableParallel` agent chains) |
 | Embeddings | Cohere `embed-english-v3.0` (1024-dim) |
 | Vector DB | Pinecone (serverless) |
@@ -268,7 +268,7 @@ Fill in `.env`:
 ```env
 # AI APIs
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=openai/gpt-oss-120b
+GROQ_MODEL=llama-3.3-70b-versatile
 GEMINI_API_KEY=your_gemini_api_key
 cohre_embedding_api_key=your_cohere_api_key
 
@@ -432,7 +432,7 @@ Autonomous-Ai-Strategy-Engine/
 | Variable | Required | Description |
 |---|---|---|
 | `GROQ_API_KEY` | Yes | Groq LLM API key |
-| `GROQ_MODEL` | No | Groq model ID (default: `openai/gpt-oss-120b`) |
+| `GROQ_MODEL` | No | Groq model ID (default: `llama-3.3-70b-versatile`) |
 | `cohre_embedding_api_key` | Yes* | Cohere API key for embeddings (*required for RAG/KB) |
 | `pinecone_Api_key` | Yes* | Pinecone API key (*required for RAG/KB) |
 | `PINECONE_INDEX_NAME` | Yes* | Index name (e.g. `documents`) |

@@ -132,7 +132,7 @@ class HybridRAGService:
         try:
             query_vec = _GEMINI_EMB_CACHE.embed_query(query)
             results = PineconeService().query(
-                self.document_ids, query_vec, top_k=3
+                self.document_ids, query_vec, top_k=max(top_k, 2)
             )
             if not results:
                 return "", []
@@ -150,7 +150,7 @@ class HybridRAGService:
             seen = set()   # deduplicate by (doc_name, page)
 
             for _, item in scored[:top_k]:
-                text = item["text"].strip()
+                text = item["text"].strip()[:450]
                 if not text:
                     continue
                 doc_name = item.get("doc_name", "")

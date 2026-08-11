@@ -4,8 +4,8 @@ from typing import Optional, List
 from duckduckgo_search import DDGS
 from .pydantic_schemas import *
 
-_DDGS_TIMEOUT = 12    # seconds per DDGS request
-_DDGS_RETRIES = 2     # attempts before giving up
+_DDGS_TIMEOUT = 8     # seconds per DDGS request (keep searches snappy)
+_DDGS_RETRIES = 1     # one attempt — fail fast, agents can still answer from knowledge
 
 
 def _ddgs_search(query: str, max_results: int) -> list:

@@ -1,11 +1,24 @@
 import json
+import os
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from langchain_core.runnables import RunnableParallel, RunnableLambda
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.messages import ToolMessage, HumanMessage
 from .prompt_services import PromptService
-from .langchain_models import Lanchain_models
+from .langchain_models import Lanchain_models, invoke_with_rate_limit_retry
 from .layer_wise_tools import MarketLayerWiseTools
+
+# Free-tier TPM (~12k): never fire all 7 agents at once.
+# Tool agents = 2 LLM calls each → smaller batches.
+# No-tool agents = 1 LLM call each → can run as a larger group.
+_TOOL_BATCH_SIZE = int(os.environ.get("GROQ_TOOL_BATCH_SIZE", "2"))
+_NOTOOL_BATCH_SIZE = int(os.environ.get("GROQ_NOTOOL_BATCH_SIZE", "3"))
+_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "5"))
+_CONTEXT_MAX_CHARS = int(os.environ.get("GROQ_CONTEXT_MAX_CHARS", "700"))
+# Back-compat env used by older deploys
+_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", str(_TOOL_BATCH_SIZE)))
 
 
 def _sanitize_json(text: str) -> str:
@@ -91,7 +104,7 @@ _FORCE_DATA_MSG = (
     "Respond ONLY with the complete JSON object."
 )
 
-_MAX_RETRIES = 2
+_MAX_RETRIES = 1
 
 
 _CRITICAL_LIST_FIELDS = {
@@ -137,7 +150,16 @@ def _is_empty_response(result: dict) -> bool:
     return total_count > 0 and (empty_count / total_count) >= 0.6
 
 
-_TOOL_RESULT_MAX_CHARS = 300
+_TOOL_RESULT_MAX_CHARS = 200
+
+
+def _truncate_context(text: str, limit: int = _CONTEXT_MAX_CHARS) -> str:
+    if not text:
+        return ""
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "…"
 
 
 def _extract_web_citations(raw_json: str) -> list:
@@ -173,10 +195,10 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
         # Groq raises 400 'tool_use_failed' when the model writes prose instead of
         # making a tool call. Catch it and fall back to base_llm (no tools).
         try:
-            response = bound_llm.invoke(base_messages)
+            response = invoke_with_rate_limit_retry(bound_llm, base_messages)
         except Exception as exc:
             if "tool_use_failed" in str(exc) or "tool_use_failed" in repr(exc):
-                response = base_llm.invoke(base_messages)
+                response = invoke_with_rate_limit_retry(base_llm, base_messages)
             else:
                 raise
 
@@ -218,7 +240,9 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
                                 HumanMessage(content=f"Tool {_tname} result: {_content}")
                             )
                         if _synthetic_results:
-                            response = base_llm.invoke(base_messages + _synthetic_results)
+                            response = invoke_with_rate_limit_retry(
+                                base_llm, base_messages + _synthetic_results
+                            )
                 except (json.JSONDecodeError, KeyError, TypeError):
                     pass
 
@@ -242,7 +266,7 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
                 tool_results.append(ToolMessage(content=content, tool_call_id=tc["id"]))
 
             fresh_messages = base_messages + [response] + tool_results
-            response = base_llm.invoke(fresh_messages)
+            response = invoke_with_rate_limit_retry(base_llm, fresh_messages)
 
         text = response.content if hasattr(response, "content") else str(response)
         text = _sanitize_json(text)
@@ -250,7 +274,7 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
         stripped = text.strip()
         if stripped and not stripped.startswith("{") and not stripped.startswith("["):
             retry_messages = base_messages + [HumanMessage(content=_FORCE_JSON_MSG)]
-            response = base_llm.invoke(retry_messages)
+            response = invoke_with_rate_limit_retry(base_llm, retry_messages)
             text = _sanitize_json(response.content if hasattr(response, "content") else str(response))
 
         # Parse JSON here so we can inject _web_citations before returning
@@ -266,7 +290,7 @@ def _build_agent_chain(prompt, bound_llm, base_llm, tools_by_name, parser):
             if not _is_empty_response(result_dict):
                 break
             retry_messages = base_messages + [HumanMessage(content=_FORCE_DATA_MSG)]
-            _retry_response = base_llm.invoke(retry_messages)
+            _retry_response = invoke_with_rate_limit_retry(base_llm, retry_messages)
             _retry_text = _sanitize_json(
                 _retry_response.content if hasattr(_retry_response, "content") else str(_retry_response)
             )
@@ -297,7 +321,7 @@ class ParallelStrategicAnalysis:
         self.tools = MarketLayerWiseTools(thread_id=thread_id)
 
     def _chain(self, prompt_key, tools_list, agent_name):
-        context = self.contexts.get(agent_name, "")
+        context = _truncate_context(self.contexts.get(agent_name, ""))
         prompt = self.PromptService.get_prompt(prompt_key)
         chat_model = self.llm.get_chat_model()
         bound = chat_model.bind_tools(tools_list) if tools_list else chat_model
@@ -305,44 +329,68 @@ class ParallelStrategicAnalysis:
         inner = _build_agent_chain(prompt, bound, chat_model, by_name, self.parser)
         return RunnableLambda(lambda inp, ctx=context: inner.invoke({**inp, "context": ctx}))
 
+    def _agent_specs(self):
+        return [
+            ("executive_summary", "EXECUTIVE_SUMMARY_PROMPT", self.tools.get_executive_summary_tools()),
+            ("market_analysis", "MARKET_ANALYSIS_PROMPT", self.tools.get_market_analysis_tools()),
+            ("competitive_landscape", "COMPETITIVE_LANDSCAPE_PROMPT", self.tools.get_competitive_landscape_tools()),
+            ("monetization_strategy", "MONETIZATION_STRATEGY_PROMPT", self.tools.get_monetization_tools()),
+            ("risk_assessment", "RISK_ASSESSMENT_PROMPT", self.tools.get_risk_assessment_tools()),
+            ("roadmap", "ROADMAP_PROMPT", self.tools.get_roadmap_tools()),
+            ("weakness_review", "WEAKNESS_REVIEW_PROMPT", self.tools.get_weakness_review_tools()),
+        ]
+
     def make_parallel_chains(self):
-        return RunnableParallel(
-            executive_summary=self._chain(
-                "EXECUTIVE_SUMMARY_PROMPT",
-                self.tools.get_executive_summary_tools(),
-                "executive_summary",
-            ),
-            market_analysis=self._chain(
-                "MARKET_ANALYSIS_PROMPT",
-                self.tools.get_market_analysis_tools(),
-                "market_analysis",
-            ),
-            competitive_landscape=self._chain(
-                "COMPETITIVE_LANDSCAPE_PROMPT",
-                self.tools.get_competitive_landscape_tools(),
-                "competitive_landscape",
-            ),
-            monetization_strategy=self._chain(
-                "MONETIZATION_STRATEGY_PROMPT",
-                self.tools.get_monetization_tools(),
-                "monetization_strategy",
-            ),
-            risk_assessment=self._chain(
-                "RISK_ASSESSMENT_PROMPT",
-                self.tools.get_risk_assessment_tools(),
-                "risk_assessment",
-            ),
-            roadmap=self._chain(
-                "ROADMAP_PROMPT",
-                self.tools.get_roadmap_tools(),
-                "roadmap",
-            ),
-            weakness_review=self._chain(
-                "WEAKNESS_REVIEW_PROMPT",
-                self.tools.get_weakness_review_tools(),
-                "weakness_review",
-            ),
-        )
+        """Legacy parallel runner — prefer run_batched() on free-tier Groq."""
+        return RunnableParallel(**{
+            name: self._chain(prompt_key, tools, name)
+            for name, prompt_key, tools in self._agent_specs()
+        })
+
+    def _run_batch(self, batch, objective: str, results: dict) -> None:
+        with ThreadPoolExecutor(max_workers=max(1, len(batch))) as pool:
+            futures = {
+                pool.submit(
+                    self._chain(prompt_key, tools, name).invoke,
+                    {"objective": objective},
+                ): name
+                for name, prompt_key, tools in batch
+            }
+            for fut in as_completed(futures):
+                name = futures[fut]
+                try:
+                    results[name] = fut.result()
+                except Exception as exc:
+                    results[name] = {"error": str(exc)}
+
+    def run_batched(self, objective: str) -> dict:
+        """Run agents in TPM-safe batches, optimized for speed.
+
+        Tool agents (2 LLM calls) run in small batches.
+        No-tool agents (1 LLM call) run together afterward — less wait time.
+        """
+        specs = self._agent_specs()
+        tool_specs = [s for s in specs if s[2]]
+        no_tool_specs = [s for s in specs if not s[2]]
+        results = {}
+
+        tool_batch = max(1, _TOOL_BATCH_SIZE if _TOOL_BATCH_SIZE else _AGENT_BATCH_SIZE)
+        no_tool_batch = max(1, _NOTOOL_BATCH_SIZE)
+        first_batch = True
+
+        for i in range(0, len(tool_specs), tool_batch):
+            if not first_batch and _AGENT_BATCH_PAUSE_S > 0:
+                time.sleep(_AGENT_BATCH_PAUSE_S)
+            first_batch = False
+            self._run_batch(tool_specs[i:i + tool_batch], objective, results)
+
+        for i in range(0, len(no_tool_specs), no_tool_batch):
+            if not first_batch and _AGENT_BATCH_PAUSE_S > 0:
+                time.sleep(_AGENT_BATCH_PAUSE_S)
+            first_batch = False
+            self._run_batch(no_tool_specs[i:i + no_tool_batch], objective, results)
+
+        return results
 
 
 class AggregatedStrategicAnalysis:
@@ -366,13 +414,13 @@ class AggregatedStrategicAnalysis:
                 if hasattr(prompt_value, "to_messages")
                 else [prompt_value]
             )
-            response = chat_model.invoke(messages)
+            response = invoke_with_rate_limit_retry(chat_model, messages)
             text = _sanitize_json(response.content if hasattr(response, "content") else str(response))
 
             stripped = text.strip()
             if stripped and not stripped.startswith("{") and not stripped.startswith("["):
                 retry_messages = messages + [HumanMessage(content=_FORCE_JSON_MSG)]
-                response = chat_model.invoke(retry_messages)
+                response = invoke_with_rate_limit_retry(chat_model, retry_messages)
                 text = _sanitize_json(response.content if hasattr(response, "content") else str(response))
 
             try:
@@ -386,7 +434,7 @@ class AggregatedStrategicAnalysis:
                 if not _is_empty_response(result_dict):
                     break
                 retry_messages = messages + [HumanMessage(content=_FORCE_DATA_MSG)]
-                _retry_response = chat_model.invoke(retry_messages)
+                _retry_response = invoke_with_rate_limit_retry(chat_model, retry_messages)
                 _retry_text = _sanitize_json(
                     _retry_response.content if hasattr(_retry_response, "content") else str(_retry_response)
                 )

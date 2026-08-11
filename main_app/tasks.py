@@ -119,7 +119,7 @@ def run_pipeline_task(thread_id, input_query, document_ids=None):
             emit(thread_id, "doc_loaded", "No documents selected — running on objective only")
 
         # ── AI Agents ──────────────────────────────────────────────
-        emit(thread_id, "agents_start", "Launching 7 parallel AI agents...")
+        emit(thread_id, "agents_start", "Running 7 AI agents in rate-limit-safe batches...")
 
         agent_names = [
             "executive_summary", "market_analysis", "competitive_landscape",
@@ -136,9 +136,8 @@ def run_pipeline_task(thread_id, input_query, document_ids=None):
             objective=input_query, thread_id=thread_id, contexts=contexts
         )
         agents_start_time = time.time()
-        strategy_chain_data = ai_strategy.make_parallel_chains().invoke({
-            "objective": input_query,
-        })
+        # Batched (not all-7 parallel) to stay under Groq free-tier TPM (~12k).
+        strategy_chain_data = ai_strategy.run_batched(input_query)
         agents_runtime_ms = int((time.time() - agents_start_time) * 1000)
 
         # Guarantee every field the frontend reads is present — fill gaps with safe defaults
