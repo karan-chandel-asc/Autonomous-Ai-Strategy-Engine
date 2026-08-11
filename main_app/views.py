@@ -96,11 +96,16 @@ class ValidateQueryView(APIView):
             "Keep it warm and natural. Never lecture."
         )
         try:
-            from .langchain_models import get_groq_model_name, invoke_with_rate_limit_retry, get_current_groq_api_key
+            from .langchain_models import (
+                get_groq_model_name,
+                get_agent_max_tokens,
+                invoke_with_rate_limit_retry,
+                get_current_groq_api_key,
+            )
             llm_kwargs = {
-                "model": get_groq_model_name(),
+                "model": get_groq_model_name("validate_query"),
                 "temperature": 0,
-                "max_tokens": 80,
+                "max_tokens": get_agent_max_tokens("validate_query"),
             }
             key = get_current_groq_api_key()
             if key:

@@ -9,10 +9,9 @@ from langchain_core.messages import ToolMessage, HumanMessage
 from .prompt_services import PromptService
 from .langchain_models import Lanchain_models, invoke_with_rate_limit_retry
 
-# Free-tier TPM (~12k). Tools disabled → 1 LLM call per agent.
-# Smaller batches + longer pause = safer on prod ForkPool workers.
-_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", "2"))
-_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "8"))
+# Per-agent models use separate TPM buckets → can run more in parallel.
+_AGENT_BATCH_SIZE = int(os.environ.get("GROQ_AGENT_BATCH_SIZE", "4"))
+_AGENT_BATCH_PAUSE_S = float(os.environ.get("GROQ_AGENT_BATCH_PAUSE_S", "1"))
 _CONTEXT_MAX_CHARS = int(os.environ.get("GROQ_CONTEXT_MAX_CHARS", "500"))
 
 
@@ -316,10 +315,10 @@ class ParallelStrategicAnalysis:
         self.llm = Lanchain_models()
 
     def _chain(self, prompt_key, agent_name):
-        """Single-call agent chain (tools disabled for free-tier TPM)."""
+        """Single-call agent chain (tools disabled; per-agent Groq model)."""
         context = _truncate_context(self.contexts.get(agent_name, ""))
         prompt = self.PromptService.get_prompt(prompt_key)
-        chat_model = self.llm.get_chat_model()
+        chat_model = self.llm.get_chat_model(agent_name)
         inner = _build_agent_chain(prompt, chat_model, chat_model, {}, self.parser)
         return RunnableLambda(lambda inp, ctx=context: inner.invoke({**inp, "context": ctx}))
 
@@ -377,7 +376,7 @@ class AggregatedStrategicAnalysis:
         self.llm = Lanchain_models()
 
     def make_aggregated_chains(self):
-        chat_model = self.llm.get_json_chat_model()
+        chat_model = self.llm.get_json_chat_model("aggregation")
         prompt = self.PromptService.get_prompt("AGGREGATION_PROMPT")
         parser = self.parser
 
