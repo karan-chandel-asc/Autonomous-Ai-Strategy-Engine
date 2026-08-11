@@ -96,8 +96,9 @@ class ValidateQueryView(APIView):
             "Keep it warm and natural. Never lecture."
         )
         try:
+            from .langchain_models import get_groq_model_name
             llm = ChatGroq(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model=get_groq_model_name(),
                 temperature=0,
                 max_tokens=150,
             )
