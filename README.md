@@ -17,7 +17,9 @@ A multi-agent AI system that turns a business objective into a comprehensive, da
 
 > Full walkthrough: query input → live agent execution → final strategy report
 
-https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine/raw/main/demo/demo_vedio.mov
+[![Watch Demo](https://img.shields.io/badge/Watch%20Demo-Google%20Drive-4285F4?logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1tZ-6SqX62Te6gPT1s_nhXNWS10ctGmNq/view?usp=sharing)
+
+**[▶ Watch the demo video](https://drive.google.com/file/d/1tZ-6SqX62Te6gPT1s_nhXNWS10ctGmNq/view?usp=sharing)**
 
 ---
 
@@ -417,7 +419,7 @@ Autonomous-Ai-Strategy-Engine/
 │   └── urls.py
 ├── templates/                   # Frontend HTML (ase_*.html)
 ├── screenshots/                 # README screenshots
-├── demo/                        # Demo video
+├── demo/                        # Local demo assets (video also on Google Drive)
 ├── manage.py
 ├── requirements.txt
 ├── runtime.txt                  # python-3.11.0
@@ -483,3 +485,4 @@ Built by **Karan Chandel**
 
 - GitHub: [karan-chandel-asc](https://github.com/karan-chandel-asc)
 - Repository: [Autonomous-Ai-Strategy-Engine](https://github.com/karan-chandel-asc/Autonomous-Ai-Strategy-Engine)
+- Demo: [Watch on Google Drive](https://drive.google.com/file/d/1tZ-6SqX62Te6gPT1s_nhXNWS10ctGmNq/view?usp=sharing)
