@@ -11,19 +11,19 @@ logger = logging.getLogger(__name__)
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b"
 
 # Free-tier-oriented map: spread agents across separate Groq TPM buckets.
-# Limits (approx free plan): 8b=6k TPM/500k TPD, 20b=8k/200k, 120b=8k/200k,
-# 70b=12k/100k, qwen3.6-27b=8k/200k.
+# Note: llama-3.1-8b-instant + llama-3.3-70b-versatile shut down 2026-08-16
+# (https://console.groq.com/docs/deprecations) → gpt-oss / qwen replacements.
 AGENT_MODEL_MAP = {
     "executive_summary": "openai/gpt-oss-20b",        # concise narrative
     "market_analysis": "openai/gpt-oss-120b",         # heavier market reasoning
     "competitive_landscape": "qwen/qwen3.6-27b",      # structured competitor JSON
-    "monetization_strategy": "llama-3.3-70b-versatile",  # numeric / unit economics
-    "risk_assessment": "llama-3.1-8b-instant",        # high TPD, lighter schema
+    "monetization_strategy": "openai/gpt-oss-120b",   # numeric / unit economics
+    "risk_assessment": "openai/gpt-oss-20b",          # lighter schema
     "roadmap": "openai/gpt-oss-20b",                  # phased plan JSON
-    "weakness_review": "llama-3.1-8b-instant",        # audit bullets
-    # gpt-oss JSON mode often returns empty failed_generation — use Llama for agg
-    "aggregation": "llama-3.1-8b-instant",
-    "validate_query": "llama-3.1-8b-instant",         # tiny gatekeeper call
+    "weakness_review": "openai/gpt-oss-20b",          # audit bullets
+    # Prefer 20b for agg/validate (JSON mode can be flaky on gpt-oss; retries handle it)
+    "aggregation": "openai/gpt-oss-20b",
+    "validate_query": "openai/gpt-oss-20b",           # tiny gatekeeper call
 }
 
 # Models that frequently fail Groq response_format=json_object
@@ -47,11 +47,9 @@ AGENT_MAX_TOKENS = {
 
 # On 429 for a model, try these next (different TPM buckets).
 MODEL_FALLBACKS = [
-    "llama-3.1-8b-instant",
     "openai/gpt-oss-20b",
     "qwen/qwen3.6-27b",
     "openai/gpt-oss-120b",
-    "llama-3.3-70b-versatile",
 ]
 
 _CHAT_MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "400"))
@@ -322,7 +320,7 @@ def invoke_with_rate_limit_retry(llm, messages, attempts: int = _RATE_LIMIT_ATTE
                 if _is_json_validate_error(exc):
                     if model_kwargs.get("response_format"):
                         model_kwargs.pop("response_format", None)
-                        call_model = "llama-3.1-8b-instant"
+                        call_model = "openai/gpt-oss-20b"
                         models_tried.add(call_model)
                         llm = _build_llm(
                             model=call_model,
@@ -337,7 +335,7 @@ def invoke_with_rate_limit_retry(llm, messages, attempts: int = _RATE_LIMIT_ATTE
                         )
                         continue
                     if attempt < attempts - 1:
-                        nxt = _next_fallback_model(call_model) or "llama-3.1-8b-instant"
+                        nxt = _next_fallback_model(call_model) or "openai/gpt-oss-20b"
                         call_model = nxt
                         models_tried.add(call_model)
                         llm = _build_llm(
